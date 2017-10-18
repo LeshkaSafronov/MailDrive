@@ -1,0 +1,18 @@
+{
+  "name": "maildrive",
+  "version": "0.0.0",
+  "description": "",
+  "main": "",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeshkaSafronov/MailDrive.git"
+  },
+  "author": "Punko&Safronov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LeshkaSafronov/MailDrive/issues"
+  },
+  "homepage": "https://github.com/LeshkaSafronov/MailDrive#readme",
+  ""
+}
