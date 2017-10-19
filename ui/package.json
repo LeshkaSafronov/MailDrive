@@ -5,7 +5,7 @@
   "main": "",
   "scripts": {
     "deps": "npm install",
-    "build": "webpack --hide-modules -color -verbose",
+    "build": "./node_modules/webpack/bin/webpack.js --hide-modules --color --verbose",
     "clear": "rm -rf node_modules build"
   },
   "repository": {
@@ -33,7 +33,6 @@
     "ui-select": "0.19.6",
     "html-webpack-plugin": "2.30.1",
     "file-loader": "1.1.5",
-    "uglifyjs-webpack-plugin": "0.4.6",
     "optimize-css-assets-webpack-plugin": "3.2.0",
     "node-sass": "4.5.3",
     "sass-loader": "6.0.6",
@@ -63,6 +62,8 @@
     "raw-loader": "0.5.1",
     "stylelint": "6.2.2",
     "webpack": "1.13.1",
-    "webpack-dev-server": "1.14.1"
+    "webpack-dev-server": "1.14.1",
+    "coffee-loader": "0.8.0",
+    "coffeescript": "2.0.1"
   }
 }
