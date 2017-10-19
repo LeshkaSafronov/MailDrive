@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  nginx:
+    image: nginx
+    ports:
+      - "8080:80"
+    command: [nginx, '-g', 'daemon off;']
+  db:
+    image: postgres
+  web:
+    image: python
+    entrypoint: /entrypoint.sh
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
