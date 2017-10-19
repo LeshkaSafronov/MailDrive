@@ -5,8 +5,9 @@
   "main": "",
   "scripts": {
     "deps": "npm install",
-    "build": "./node_modules/webpack/bin/webpack.js --hide-modules --color --verbose",
-    "clear": "rm -rf node_modules build"
+    "clear": "rm -rf node_modules build",
+    "build": "rm -rf build && ./node_modules/webpack/bin/webpack.js --hide-modules --color --verbose",
+    "server": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --content-base build/"
   },
   "repository": {
     "type": "git",

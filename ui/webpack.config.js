@@ -152,7 +152,10 @@ const webpackConfigs = {
     },
     plugins: [
         new ExtractTextPlugin('main.[contenthash].css'),
-        new HtmlWebpackPlugin({template: 'index.html'}),
+        new HtmlWebpackPlugin({
+            template: 'index.html',
+            favicon: 'assets/favicon.iso'
+        }),
         new CirclDepPlugin({failOnError: true}),
         new OptimizeCssAssetsPlugin(),
         new webpack.NoErrorsPlugin(),
