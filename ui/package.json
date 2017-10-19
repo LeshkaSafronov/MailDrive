@@ -63,7 +63,6 @@
     "stylelint": "6.2.2",
     "webpack": "1.13.1",
     "webpack-dev-server": "1.14.1",
-    "coffee-loader": "0.8.0",
-    "coffeescript": "2.0.1"
+    "url-loader": "^0.5.5"
   }
 }

@@ -16,33 +16,48 @@ const buildDir = path.join(uiDir, 'build');
 
 
 // Resolve path for libs files
-const shirmModules = {};
+const shirmModules = {
+    'jquery': {
+        path: path.join(nodeModulesDir, 'jquery/dist/jquery.min'),
+        devPath: path.join(nodeModulesDir, 'jquery/dist/jquery')
+    },
+
+    'angular': {
+        path: path.join(nodeModulesDir, 'angular/index'),
+        loader: {
+            test: '/angular/',
+            loader: 'imports?$=jquery!exports?angular'
+        }
+    }
+};
 
 
 // Resolver libs files
 function webpackLibsResolver() {
     const out = {
         resolve: {alias: {}},
-        module: {rules: {}}
+        module: {rules: []}
     };
 
     Object.keys(shirmModules).forEach(alias => {
-        let libPaht;
+        let libPath;
         const libConfig = shirmModules[alias];
 
         if (typeof libConfig === 'string') {
             libPath = libConfig;
 
         } else {
-            libPath - libConfig.path || alias;
+            libPath = libConfig.path || alias;
+
         }
 
-        out.resove.alias[alias] = libPath;
+        out.resolve.alias[alias] = libPath;
         libConfig.rule ? out.module.rules.push(libConfig.rule) : null;
     });
 
     return out;
 }
+
 
 // Webpack configs
 const webpackConfigs = {
@@ -52,9 +67,9 @@ const webpackConfigs = {
         root: srcDir,
         modules: [srcDir, nodeModulesDir],
         alias: webpackLibsResolver().resolve.alias,
-        modulesDirectories: ['/node_modules']
+        modulesDirectories: ['/node_modules/']
     },
-    entry: 'main.coffee',
+    entry: 'main.js',
     output: {
         path: buildDir,
         filename: '[name].[chunkhash].js',
@@ -126,18 +141,11 @@ const webpackConfigs = {
 
             // js loaders
             {
-                test: /\,js$/,
+                test: /\.js$/,
                 loader: 'babel',
                 exclude: /node_modules/,
                 query: {
                     presets: ['es2015', 'es2016', 'es2017']
-                }
-            },
-            {
-                test: /\.coffe/,
-                loader: 'coffee-loader',
-                options: {
-                    literate: true
                 }
             }
         ]
