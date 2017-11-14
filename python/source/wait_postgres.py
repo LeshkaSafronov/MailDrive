@@ -3,13 +3,13 @@ import logging
 import sys
 import time
 
-conn_string = "host='db' dbname='postgres' user='postgres'"
+from settings import CONNECTION_STRING
 
 
 def wait_postgres(table_name):
     while True:
         try:
-            with psycopg2.connect(conn_string) as conn:
+            with psycopg2.connect(CONNECTION_STRING) as conn:
                 with conn.cursor() as cursor:
                     cursor.execute("select * from {};".format(table_name))
             logging.warning('Connected!')

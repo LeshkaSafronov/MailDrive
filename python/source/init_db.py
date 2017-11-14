@@ -2,16 +2,16 @@ import psycopg2
 conn_string = "host='db' dbname='postgres' user='postgres'"
 
 DATA_TABLES = {
-    'user': """CREATE TABLE mail_user (
-                  id SERIAL PRIMARY KEY,
-                  name VARCHAR(256),
-                  subname VARCHAR(256),
-                  age INTEGER CHECK (age > 0),
-                  country VARCHAR(256),
-                  telephone_number VARCHAR(32),
-                  email VARCHAR(254),
-                  password VARCHAR(256)
-                );"""
+    'mail_user': """CREATE TABLE mail_user (
+                      id SERIAL PRIMARY KEY,
+                      name VARCHAR(256),
+                      subname VARCHAR(256),
+                      age INTEGER CHECK (age > 0),
+                      country VARCHAR(256),
+                      telephone_number VARCHAR(32),
+                      email VARCHAR(254),
+                      password VARCHAR(256)
+                    );"""
 }
 
 def init_db():

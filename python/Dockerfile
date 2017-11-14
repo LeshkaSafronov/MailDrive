@@ -8,5 +8,5 @@ ADD requirements.txt /code/
 
 RUN pip install -r requirements.txt
 
-ADD web /code/
+ADD source /code/
 ADD entrypoint.sh /
