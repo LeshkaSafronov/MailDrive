@@ -2,7 +2,7 @@ import psycopg2
 import logging
 
 from aiohttp import web
-from settings import CONNECTION_STRING
+from settings.settings import CONNECTION_STRING
 
 
 class UserMixinView:
