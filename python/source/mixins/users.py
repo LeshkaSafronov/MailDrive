@@ -18,10 +18,10 @@ class UserMixinView:
 
     async def list_users(self, request):
         data = []
-        with psycopg2.connect(CONNECTION_STRING) as conn:
-            with conn.cursor() as cursor:
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor(cursor_factory=psycopg2.extras.namedtuplecursor) as cursor:
                 cursor.execute("""SELECT * from mail_user""")
-                for record in cursor.fetchall():
+                for record in await cursor.fetchall():
                     logging.warning('record --> {}'.format(record))
                     data += dict(zip(self.FIELDS, record))
         return web.json_response(data)
