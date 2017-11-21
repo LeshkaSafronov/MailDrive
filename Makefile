@@ -9,3 +9,10 @@ db:
 .PHONY: up
 up: db python
 	docker-compose up
+
+.PHONY: down
+down:
+	docker-compose down
+
+.PHONY: restart
+restart: down up

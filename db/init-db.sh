@@ -2,12 +2,15 @@
 set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-    CREATE USER admin WITH PASSWORD admin;
+    CREATE USER leshka WITH PASSWORD 'leshka';
     CREATE DATABASE mail_drive;
-    GRANT ALL PRIVILEGES ON DATABASE mail_drive TO admin;
 
-    \c mail_drive
+    GRANT ALL PRIVILEGES ON DATABASE mail_drive TO leshka;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO leshka;
 
+EOSQL
+
+PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka <<-EOSQL
     CREATE TABLE mail_user (
         id SERIAL PRIMARY KEY,
         name VARCHAR(256),
