@@ -1,11 +1,12 @@
 import psycopg2
-import logging
 
 from aiohttp import web
 from settings.settings import CONNECTION_STRING
+from collections import OrderedDict
+from mixins.build import BuildMixin
 
 
-class UserMixinView:
+class UserMixinView(BuildMixin):
 
     FIELDS = ('id',
               'name',
@@ -16,34 +17,57 @@ class UserMixinView:
               'email',
               'password')
 
+    def _register_routes(self):
+        self.router.add_get('/users', self.list_users)
+        self.router.add_get('/users/{user_id:\d+}', self.retrieve_user)
+        self.router.add_post('/users', self.create_user)
+        self.router.add_put('/users/{user_id:\d+}', self.update_user)
+        self.router.add_delete('/users/{user_id:\d+}', self.delete_user)
+
     async def list_users(self, request):
         data = []
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor) as cursor:
-                await cursor.execute('SELECT * FROM mail_user;')
+            async with conn.cursor() as cursor:
+                await cursor.execute(self.build_universal_select_query('mail_user'))
                 for record in await cursor.fetchall():
-                    data += dict(zip(self.FIELDS, record))
+                    data.append(OrderedDict(zip(self.FIELDS, record)))
         return web.json_response(data)
 
     async def retrieve_user(self, request):
         user_id = int(request.match_info['user_id'])
-        with psycopg2.connect(CONNECTION_STRING) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""SELECT * from mail_user WHERE id = {}""".format(user_id))
-                data = dict(zip(self.FIELDS, cursor.fetchall()))
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(self.build_universal_select_query('mail_user',
+                                                                       where={'id': user_id}))
+                record = await cursor.fetchone()
+                data = OrderedDict(zip(self.FIELDS, record))
         return web.json_response(data)
 
     async def create_user(self, request):
         request_json = await request.json()
         with psycopg2.connect(CONNECTION_STRING) as conn:
             with conn.cursor() as cursor:
-                cursor.execute("""INSERT INTO mail_user ({}) VALUES ({}) RETURNING *;""".format(
-                    str(list(request_json.keys())).replace("'", '')[1:-1],
-                    str(list(request_json.values()))[1:-1]
-                ))
+                cursor.execute(self.build_universal_insert_query('mail_user',
+                                                                 fields=request_json.keys(),
+                                                                 values=request_json.values()))
                 data = cursor.fetchone()
-                logging.warning('data --> {}'.format(data))
         return web.json_response({'status': 'success'})
 
     async def update_user(self, request):
-        pass
+        user_id = int(request.match_info['user_id'])
+        request_json = await request.json()
+        with psycopg2.connect(CONNECTION_STRING) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(self.build_universal_update_query('mail_user',
+                                                                 set=request_json,
+                                                                 where={'id': user_id}))
+                data = cursor.fetchone()
+        return web.json_response({'status': 'success'})
+
+    async def delete_user(self, request):
+        user_id = int(request.match_info['user_id'])
+        with psycopg2.connect(CONNECTION_STRING) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(self.build_universal_delete_query('mail_user',
+                                                                 where={'id': user_id}))
+        return web.json_response({'status': 'success'})

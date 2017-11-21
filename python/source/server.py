@@ -17,10 +17,7 @@ class APIServer(web.Application, UserMixinView):
         self._dbpool = None
 
     def _register_routes(self):
-        self.router.add_get('/users', self.list_users)
-        self.router.add_get('/users/{user_id:\d+}', self.retrieve_user)
-        self.router.add_post('/users', self.create_user)
-        self.router.add_put('/users/{user_id:\d+}', self.update_user)
+        UserMixinView._register_routes(self)
 
     def _get_cookie_storage(self):
         fernet_key = fernet.Fernet.generate_key()
