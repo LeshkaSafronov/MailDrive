@@ -2,6 +2,10 @@
 python:
 	docker build -t python python/
 
+.PHONY: db
+db:
+	docker build -t db db/
+
 .PHONY: up
-up: python
+up: db python
 	docker-compose up
