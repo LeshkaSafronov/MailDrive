@@ -9,4 +9,6 @@ ADD requirements.txt /code/
 RUN pip install -r requirements.txt
 
 ADD source /code/
+
 ADD entrypoint.sh /
+ADD test-entrypoint.sh /

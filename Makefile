@@ -16,3 +16,7 @@ down:
 
 .PHONY: restart
 restart: down up
+
+.PHONY: test
+test: db python
+	docker-compose -f docker-compose-tests.yml up

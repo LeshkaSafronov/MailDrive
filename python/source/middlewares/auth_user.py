@@ -7,6 +7,7 @@ import aiopg
 from aiohttp.web import middleware, Response
 from aiohttp_session import get_session
 from settings import CONNECTION_STRING
+from storage import client
 
 
 async def check_basic_auth(request):

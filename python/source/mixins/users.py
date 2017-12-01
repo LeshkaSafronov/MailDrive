@@ -4,9 +4,10 @@ import logging
 from aiohttp import web
 from collections import OrderedDict
 from aiohttp_session import get_session
+from mixins.base import BaseMixinView
 
 
-class UserMixinView:
+class UserMixinView(BaseMixinView):
 
     FIELDS = ('id',
               'name',
@@ -23,16 +24,12 @@ class UserMixinView:
         self.router.add_post('/users', self.create_user)
         self.router.add_put('/users/{user_id:\d+}', self.update_user)
         self.router.add_delete('/users/{user_id:\d+}', self.delete_user)
+
         self.router.add_post('/users/login', self.login)
         self.router.add_post('/users/logout', self.logout)
 
-    async def _fetch_one(self, cursor):
-        record = await cursor.fetchone()
-        return OrderedDict(zip(self.FIELDS, record))
-
-    async def _fetch_all(self, cursor):
-        records = await cursor.fetchall()
-        return [OrderedDict(zip(self.FIELDS, record)) for record in records]
+        self.router.add_get('/users/{user_id:\d+}/avatar', self.get_avatar)
+        self.router.add_post('/users/{user_id:\d+}/avatar', self.set_avatar)
 
     async def list_users(self, request):
         async with self._dbpool.acquire() as conn:
@@ -48,15 +45,35 @@ class UserMixinView:
                 await cursor.execute(db.build_universal_select_query('mail_user',
                                                                      where={'id': user_id}))
                 data = await self._fetch_one(cursor)
+                if not data:
+                    return web.Response(text='User not found', status=404)
+
         return web.json_response(data)
 
     async def create_user(self, request):
         request_json = await request.json()
+        email, telephone_number = request_json['email'], request_json['telephone_number']
+
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
+
+                await cursor.execute(db.build_universal_select_query(
+                    'mail_user',
+                    where={
+                        'email': email,
+                        'telephone_number': telephone_number
+                    },
+                    sep=' OR ')
+                )
+                founded_users = await self._fetch_all(cursor)
+                if founded_users:
+                    return web.Response(text='User with supplied email or telephone number already exists',
+                                        status=400)
+
                 await cursor.execute(db.build_universal_insert_query('mail_user',
                                                                      fields=request_json.keys(),
                                                                      values=request_json.values()))
+
                 data = await self._fetch_one(cursor)
         return web.json_response(data, status=201)
 
@@ -94,7 +111,7 @@ class UserMixinView:
                         }
                     )
                 )
-                data = await self._fetch_all(cursor)
+                data = await self._fetch_one(cursor)
                 if data:
                     session = await get_session(request)
                     session['authorized'] = True
@@ -106,3 +123,21 @@ class UserMixinView:
         session = await get_session(request)
         session.pop('authorized', None)
         return web.Response(status=200)
+
+    async def get_avatar(self, request):
+        user_id = int(request.match_info['user_id'])
+        logging.warning('request --> {}'.format(request))
+        return web.Response()
+
+    async def set_avatar(self, request):
+        user_id = int(request.match_info['user_id'])
+
+        content = b''
+        while True:
+            data = await request.content.readany()
+            if not data:
+                break
+            content += data
+
+        logging.warning('content --> {}'.format(content))
+        return web.Response()

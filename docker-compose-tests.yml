@@ -1,0 +1,73 @@
+version: '3'
+
+services:
+  db-test:
+    image: db
+    volumes:
+      - postgres-test-volume:/var/lib/postgresql/data
+  web-test:
+    image: python
+    entrypoint: /test-entrypoint.sh
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db-test
+
+  polygon-test:
+    image: python
+    command: python3.5 tests.py
+    depends_on:
+      - web-test
+
+  minio1-test:
+    image: minio/minio
+    volumes:
+      - minio-test-volume1:/export
+    ports:
+      - "9001:9000"
+    environment:
+      MINIO_ACCESS_KEY: set-value-here
+      MINIO_SECRET_KEY: set-value-here
+    command: server http://minio1-test/export http://minio2-test/export http://minio3-test/export http://minio4-test/export
+
+  minio2-test:
+    image: minio/minio
+    volumes:
+      - minio-test-volume2:/export
+    ports:
+      - "9002:9000"
+    environment:
+      MINIO_ACCESS_KEY: set-value-here
+      MINIO_SECRET_KEY: set-value-here
+    command: server http://minio1-test/export http://minio2-test/export http://minio3-test/export http://minio4-test/export
+
+  minio3-test:
+    image: minio/minio
+    volumes:
+      - minio-test-volume3:/export
+    ports:
+      - "9003:9000"
+    environment:
+      MINIO_ACCESS_KEY: set-value-here
+      MINIO_SECRET_KEY: set-value-here
+    command: server http://minio1-test/export http://minio2-test/export http://minio3-test/export http://minio4-test/export
+
+  minio4-test:
+    image: minio/minio
+    volumes:
+      - minio-test-volume4:/export
+    ports:
+      - "9004:9000"
+    environment:
+      MINIO_ACCESS_KEY: set-value-here
+      MINIO_SECRET_KEY: set-value-here
+    command: server http://minio1-test/export http://minio2-test/export http://minio3-test/export http://minio4-test/export
+
+## By default this config uses default local driver,
+## For custom volumes replace with volume driver configuration.
+volumes:
+  minio-test-volume1:
+  minio-test-volume2:
+  minio-test-volume3:
+  minio-test-volume4:
+  postgres-test-volume:

@@ -2,9 +2,9 @@ def handle_value(value):
     return "'{}'".format(value) if isinstance(value, str) else str(value)
 
 
-def build_where(where):
+def build_where(where, sep = ' AND '):
     return 'WHERE {}'.format(
-        ' AND '.join(['{}={}'.format(key, handle_value(value))
+        ' {} '.format(sep).join(['{}={}'.format(key, handle_value(value))
                     for key, value in where.items()])
     )
 
@@ -16,10 +16,10 @@ def build_set(set):
     )
 
 
-def build_universal_select_query(db_table, where=None):
+def build_universal_select_query(db_table, where=None, sep=' AND '):
     query = 'SELECT * FROM {}'.format(db_table)
     if where:
-        query = '{} {}'.format(query, build_where(where))
+        query = '{} {}'.format(query, build_where(where, sep))
     query += ';'
     return query
 
