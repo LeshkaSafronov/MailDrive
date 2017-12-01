@@ -8,7 +8,7 @@ from cryptography import fernet
 from aiohttp import web
 from aiohttp_session import setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
-from settings.settings import CONNECTION_STRING
+from settings import CONNECTION_STRING
 
 class APIServer(web.Application, UserMixinView):
 

@@ -2,3 +2,4 @@
 ui/node_modules/
 ui/build
 postgres-data
+venv/

@@ -3,7 +3,7 @@ import logging
 import sys
 import time
 
-from settings.settings import CONNECTION_STRING
+from settings import CONNECTION_STRING
 
 
 def wait_postgres(table_name):
