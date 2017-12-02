@@ -4,6 +4,7 @@ import settings
 import logging
 
 from functools import lru_cache
+from botocore.exceptions import ClientError
 
 
 @lru_cache(maxsize=2)
@@ -19,7 +20,7 @@ def init_client():
     )
     while True:
         try:
-            logging.warning(client.list_buckets())
+            client.list_buckets()
         except botocore.vendored.requests.exceptions.ConnectionError as e:
             logging.warning('Cannot connect to {}. Reason {}'.format(
                 '{}:{}'.format(settings.MINIO_HOST,
@@ -29,6 +30,13 @@ def init_client():
         else:
             logging.warning('Connection to minio successed!!!')
             break
+
+    try:
+        logging.warning(client.head_bucket(Bucket='users'))
+    except ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            client.create_bucket(Bucket = 'users')
+
     return client
 
 

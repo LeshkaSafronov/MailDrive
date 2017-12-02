@@ -19,7 +19,9 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
         country VARCHAR(256),
         telephone_number VARCHAR(32),
         email VARCHAR(254),
-        password VARCHAR(256)
+        password VARCHAR(256),
+        avatar VARCHAR(256),
+        avatar_token VARCHAR(256)
     );
 
     INSERT INTO mail_user (email, password)

@@ -1,10 +1,12 @@
+import random
+
 import db
-import logging
 
 from aiohttp import web
-from collections import OrderedDict
 from aiohttp_session import get_session
 from mixins.base import BaseMixinView
+from storage import client
+from botocore.exceptions import ClientError
 
 
 class UserMixinView(BaseMixinView):
@@ -16,7 +18,9 @@ class UserMixinView(BaseMixinView):
               'country',
               'telephone_number',
               'email',
-              'password')
+              'password',
+              'avatar',
+              'avatar_token')
 
     def _register_routes(self):
         self.router.add_get('/api/users', self.list_users)
@@ -136,11 +140,40 @@ class UserMixinView(BaseMixinView):
 
     async def get_avatar(self, request):
         user_id = int(request.match_info['user_id'])
-        logging.warning('request --> {}'.format(request))
-        return web.Response()
+        user = await self.get_object('mail_user',
+                                     where={'id': user_id})
+        if not user:
+            return web.Response(text='User not found', status=404)
+
+        if user['avatar_token'] != request.query['imghash']:
+            return web.Response(text='Invalid imghash', status=400)
+
+        object_key = '{}/{}'.format(user_id, user['avatar_token'])
+
+        try:
+            client.head_object(
+                Bucket='users',
+                Key=object_key
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return web.Response(text='Image is not set', status=404)
+
+        file = client.get_object(
+            Bucket='users',
+            Key=object_key
+        )
+
+        content = file['Body'].read()
+        return web.Response(body=content, status=200, content_type='image/jpeg')
 
     async def set_avatar(self, request):
         user_id = int(request.match_info['user_id'])
+
+        user = await self.get_object('mail_user',
+                                     where={'id': user_id})
+        if not user:
+            return web.Response(text='User not found', status=404)
 
         content = b''
         while True:
@@ -149,5 +182,23 @@ class UserMixinView(BaseMixinView):
                 break
             content += data
 
-        logging.warning('content --> {}'.format(content))
-        return web.Response()
+        token = random.getrandbits(64)
+        avatar_url = '/api/users/{}/avatar?imghash={}'.format(user_id, token)
+
+        client.put_object(Bucket='users',
+                          Key='{}/{}'.format(user_id, token),
+                          Body=content)
+
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    db.build_universal_update_query(
+                        'mail_user',
+                        set={
+                            'avatar': avatar_url,
+                            'avatar_token': token
+                        },
+                        where={'id': user_id}
+                    )
+                )
+        return web.json_response({'avatar': avatar_url}, status=200)
