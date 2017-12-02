@@ -171,7 +171,7 @@ class TestCase(unittest.TestCase):
                 auth=('superadmin', 'superadmin')
             )
             self.assertEqual(resp.status_code, 404)
-            self.assertEqual(resp.text, 'User not found')
+            self.assertEqual(resp.text, 'Not found')
 
         for method in ['get', 'put']:
             resp = requests.request(
@@ -180,7 +180,7 @@ class TestCase(unittest.TestCase):
                 auth=('superadmin', 'superadmin')
             )
             self.assertEqual(resp.status_code, 404)
-            self.assertEqual(resp.text, 'User not found')
+            self.assertEqual(resp.text, 'Not found')
 
     def test_list_users(self):
         resp = requests.get(

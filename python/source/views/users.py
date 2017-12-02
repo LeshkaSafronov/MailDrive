@@ -4,12 +4,12 @@ import db
 
 from aiohttp import web
 from aiohttp_session import get_session
-from mixins.base import BaseMixinView
+from views.base import BaseViewSet
 from storage import client
 from botocore.exceptions import ClientError
 
 
-class UserMixinView(BaseMixinView):
+class UserViewSet(BaseViewSet):
 
     FIELDS = ('id',
               'name',
@@ -22,35 +22,22 @@ class UserMixinView(BaseMixinView):
               'avatar',
               'avatar_token')
 
+    OBJECT_ID = 'user_id'
+    DB_TABLE = 'mail_user'
+
+
     def _register_routes(self):
-        self.router.add_get('/api/users', self.list_users)
-        self.router.add_get('/api/users/{user_id:\d+}', self.retrieve_user)
+        self.router.add_get('/api/users', self.list_objects)
+        self.router.add_get('/api/users/{user_id:\d+}', self.retrieve_object)
         self.router.add_post('/api/users', self.create_user)
-        self.router.add_put('/api/users/{user_id:\d+}', self.update_user)
-        self.router.add_delete('/api/users/{user_id:\d+}', self.delete_user)
+        self.router.add_put('/api/users/{user_id:\d+}', self.update_object)
+        self.router.add_delete('/api/users/{user_id:\d+}', self.delete_object)
 
         self.router.add_post('/api/users/login', self.login)
         self.router.add_post('/api/users/logout', self.logout)
 
         self.router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
         self.router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
-
-
-    async def list_users(self, request):
-        async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(db.build_universal_select_query('mail_user'))
-                data = await self._fetch_all(cursor)
-        return web.json_response(data=data)
-
-    async def retrieve_user(self, request):
-        user_id = int(request.match_info['user_id'])
-        user = await self.get_object('mail_user',
-                                     where={'id': user_id})
-        if not user:
-            return web.Response(text='User not found', status=404)
-        else:
-            return web.json_response(user)
 
     async def create_user(self, request):
         request_json = await request.json()
@@ -78,37 +65,6 @@ class UserMixinView(BaseMixinView):
 
                 data = await self._fetch_one(cursor)
         return web.json_response(data, status=201)
-
-    async def update_user(self, request):
-        user_id = int(request.match_info['user_id'])
-
-        user = await self.get_object('mail_user',
-                                     where={'id': user_id})
-        if not user:
-            return web.Response(text='User not found', status=404)
-
-        request_json = await request.json()
-        async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(db.build_universal_update_query('mail_user',
-                                                                     set=request_json,
-                                                                     where={'id': user_id}))
-                data = await self._fetch_one(cursor)
-        return web.json_response(data, status=200)
-
-    async def delete_user(self, request):
-        user_id = int(request.match_info['user_id'])
-
-        user = await self.get_object('mail_user',
-                                     where={'id': user_id})
-        if not user:
-            return web.Response(text='User not found', status=404)
-
-        async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(db.build_universal_delete_query('mail_user',
-                                                                     where={'id': user_id}))
-        return web.json_response(status=204)
 
     async def login(self, request):
         request_json = await request.json()
@@ -143,7 +99,7 @@ class UserMixinView(BaseMixinView):
         user = await self.get_object('mail_user',
                                      where={'id': user_id})
         if not user:
-            return web.Response(text='User not found', status=404)
+            return web.Response(text='Not found', status=404)
 
         if 'imghash' not in request.query:
             return web.Response(text='imghash is required', status=400)
@@ -176,7 +132,7 @@ class UserMixinView(BaseMixinView):
         user = await self.get_object('mail_user',
                                      where={'id': user_id})
         if not user:
-            return web.Response(text='User not found', status=404)
+            return web.Response(text='Not found', status=404)
 
         content = b''
         while True:

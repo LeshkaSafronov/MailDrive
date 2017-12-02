@@ -2,7 +2,10 @@ import json
 from aiohttp import web
 import base64
 import aiopg
-from mixins.users import UserMixinView
+
+from views.users import UserViewSet
+# from views.mail import MailViewSet
+
 from middlewares.auth_user import auth_middleware
 from cryptography import fernet
 from aiohttp import web
@@ -10,14 +13,15 @@ from aiohttp_session import setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from settings import CONNECTION_STRING
 
-class APIServer(web.Application, UserMixinView):
+class APIServer(web.Application, UserViewSet):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._dbpool = None
 
     def _register_routes(self):
-        UserMixinView._register_routes(self)
+        UserViewSet._register_routes(self)
+        # MailViewSet._register_routes(self)
         self.router.add_get('/api', self.welcome)
 
     def welcome(self, request):
