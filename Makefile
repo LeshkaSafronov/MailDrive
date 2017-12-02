@@ -12,7 +12,7 @@ up: db python
 
 .PHONY: down
 down:
-	docker-compose down
+	docker-compose down -v --remove-orphans
 
 .PHONY: restart
 restart: down up
@@ -20,3 +20,6 @@ restart: down up
 .PHONY: test
 test: db python
 	docker-compose -f docker-compose-tests.yml up
+
+.PHONY: restart-test
+restart-test: down test

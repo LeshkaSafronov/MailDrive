@@ -19,36 +19,34 @@ class UserMixinView(BaseMixinView):
               'password')
 
     def _register_routes(self):
-        self.router.add_get('/users', self.list_users)
-        self.router.add_get('/users/{user_id:\d+}', self.retrieve_user)
-        self.router.add_post('/users', self.create_user)
-        self.router.add_put('/users/{user_id:\d+}', self.update_user)
-        self.router.add_delete('/users/{user_id:\d+}', self.delete_user)
+        self.router.add_get('/api/users', self.list_users)
+        self.router.add_get('/api/users/{user_id:\d+}', self.retrieve_user)
+        self.router.add_post('/api/users', self.create_user)
+        self.router.add_put('/api/users/{user_id:\d+}', self.update_user)
+        self.router.add_delete('/api/users/{user_id:\d+}', self.delete_user)
 
-        self.router.add_post('/users/login', self.login)
-        self.router.add_post('/users/logout', self.logout)
+        self.router.add_post('/api/users/login', self.login)
+        self.router.add_post('/api/users/logout', self.logout)
 
-        self.router.add_get('/users/{user_id:\d+}/avatar', self.get_avatar)
-        self.router.add_post('/users/{user_id:\d+}/avatar', self.set_avatar)
+        self.router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
+        self.router.add_post('/api/users/{user_id:\d+}/avatar', self.set_avatar)
+
 
     async def list_users(self, request):
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
                 await cursor.execute(db.build_universal_select_query('mail_user'))
                 data = await self._fetch_all(cursor)
-        return web.json_response(data)
+        return web.json_response(data=data)
 
     async def retrieve_user(self, request):
         user_id = int(request.match_info['user_id'])
-        async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(db.build_universal_select_query('mail_user',
-                                                                     where={'id': user_id}))
-                data = await self._fetch_one(cursor)
-                if not data:
-                    return web.Response(text='User not found', status=404)
-
-        return web.json_response(data)
+        user = await self.get_object('mail_user',
+                                     where={'id': user_id})
+        if not user:
+            return web.Response(text='User not found', status=404)
+        else:
+            return web.json_response(user)
 
     async def create_user(self, request):
         request_json = await request.json()
@@ -79,6 +77,12 @@ class UserMixinView(BaseMixinView):
 
     async def update_user(self, request):
         user_id = int(request.match_info['user_id'])
+
+        user = await self.get_object('mail_user',
+                                     where={'id': user_id})
+        if not user:
+            return web.Response(text='User not found', status=404)
+
         request_json = await request.json()
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
@@ -90,6 +94,12 @@ class UserMixinView(BaseMixinView):
 
     async def delete_user(self, request):
         user_id = int(request.match_info['user_id'])
+
+        user = await self.get_object('mail_user',
+                                     where={'id': user_id})
+        if not user:
+            return web.Response(text='User not found', status=404)
+
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
                 await cursor.execute(db.build_universal_delete_query('mail_user',

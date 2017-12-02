@@ -36,6 +36,12 @@ services:
       MINIO_PORT: 9000
       MINIO_ACCESS_KEY: set-value-here
       MINIO_SECRET_KEY: set-value-here
+
+      WEB_HOST: web-test
+      WEB_PORT: 8000
+
+
+      fo: 8000
     depends_on:
       - web-test
 

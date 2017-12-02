@@ -21,4 +21,8 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
         email VARCHAR(254),
         password VARCHAR(256)
     );
+
+    INSERT INTO mail_user (email, password)
+        VALUES
+            ('superadmin', 'superadmin')
 EOSQL

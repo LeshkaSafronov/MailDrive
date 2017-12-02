@@ -18,6 +18,10 @@ class APIServer(web.Application, UserMixinView):
 
     def _register_routes(self):
         UserMixinView._register_routes(self)
+        self.router.add_get('/api', self.welcome)
+
+    def welcome(self, request):
+        return web.Response(text='Welcome!')
 
     def _get_cookie_storage(self):
         fernet_key = fernet.Fernet.generate_key()

@@ -40,7 +40,7 @@ async def check_basic_auth(request):
 
 @middleware
 async def auth_middleware(request, handler):
-    if request.path == '/users/login':
+    if request.path == '/api/users/login':
         return await handler(request)
 
     if 'Authorization' in request.headers:
