@@ -33,7 +33,7 @@ class UserMixinView(BaseMixinView):
         self.router.add_post('/api/users/logout', self.logout)
 
         self.router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
-        self.router.add_post('/api/users/{user_id:\d+}/avatar', self.set_avatar)
+        self.router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
 
 
     async def list_users(self, request):
