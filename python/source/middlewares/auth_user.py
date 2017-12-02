@@ -18,12 +18,6 @@ async def check_basic_auth(request):
 
     async with aiopg.connect(CONNECTION_STRING) as conn:
         async with conn.cursor() as cursor:
-            logging.warning(db.build_universal_select_query(
-                'mail_user',
-                where={
-                    'email': email,
-                    'password': password
-                }))
             await cursor.execute(db.build_universal_select_query(
                 'mail_user',
                 where={

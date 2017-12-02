@@ -21,7 +21,7 @@ def init_client():
     while True:
         try:
             client.list_buckets()
-        except botocore.vendored.requests.exceptions.ConnectionError as e:
+        except ClientError as e:
             logging.warning('Cannot connect to {}. Reason {}'.format(
                 '{}:{}'.format(settings.MINIO_HOST,
                                settings.MINIO_PORT),
@@ -32,7 +32,7 @@ def init_client():
             break
 
     try:
-        logging.warning(client.head_bucket(Bucket='users'))
+        client.head_bucket(Bucket='users')
     except ClientError as e:
         if e.response['Error']['Code'] == '404':
             client.create_bucket(Bucket = 'users')

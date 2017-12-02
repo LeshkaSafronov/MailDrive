@@ -6,15 +6,20 @@ import psycopg2.extras
 import logging
 import db
 import json
+from botocore.exceptions import ClientError
 
 import requests
 import time
+from storage import client
 
 
 WEB_HOST = os.environ['WEB_HOST']
 WEB_PORT = os.environ['WEB_PORT']
 
-ENDPOINT = 'http://{}:{}/api'.format(WEB_HOST, WEB_PORT)
+ENDPOINT = 'http://{}:{}'.format(WEB_HOST, WEB_PORT)
+
+IMAGE_DATA_1 = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe1\x0c\x02\r:1\x02\x9a\n\x1d\x00\x00\x00\x19tEXtComment\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82'
+IMAGE_DATA_2 = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x02\x08\x02\x00\x00\x00\x16\xe3!p\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe1\x0c\x02\x0f\x0c\x16-\x08\xfam\x00\x00\x00\x19tEXtComment\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00\x10IDAT\x08\xd7c\xf8\xff\xff?\x13\x03\x03\x03\x00\x11\xfe\x03\x00\xf7\xaa\x99O\x00\x00\x00\x00IEND\xaeB`\x82'
 
 
 def wait_web():
@@ -78,7 +83,9 @@ class TestCase(unittest.TestCase):
                 'country': 'Mogilev',
                 'telephone_number': '222322',
                 'email': 'diamond.alex97@gmail.com',
-                'password': '123'
+                'password': '123',
+                'avatar': '',
+                'avatar_token': ''
             }
         )
 
@@ -90,7 +97,9 @@ class TestCase(unittest.TestCase):
                 'country': 'Brest',
                 'telephone_number': '345345345',
                 'email': 'punko.kek@vlad.com',
-                'password': '2345'
+                'password': '2345',
+                'avatar': '',
+                'avatar_token': ''
             }
         )
 
@@ -102,24 +111,29 @@ class TestCase(unittest.TestCase):
                 'country': 'Baranovichi',
                 'telephone_number': '097654',
                 'email': 'gusakovskaya.jenya@kek.com',
-                'password': '657'
+                'password': '657',
+                'avatar': '',
+                'avatar_token': ''
             }
         )
 
     def test_basic_auth(self):
-        resp_without_auth = requests.get(ENDPOINT)
+        resp_without_auth = requests.get(os.path.join(ENDPOINT, 'api'))
         self.assertEqual(resp_without_auth.status_code, 401)
 
-        resp = requests.get(ENDPOINT, auth=('superadmin', 'superadmin'))
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'api'),
+            auth=('superadmin', 'superadmin')
+        )
         self.assertEqual(resp.status_code, 200)
 
     def test_auth_via_session(self):
         with requests.session() as session:
-            resp = session.get(ENDPOINT)
+            resp = session.get(os.path.join(ENDPOINT, 'api'))
             self.assertEqual(resp.status_code, 401)
 
             resp = session.post(
-                os.path.join(ENDPOINT, 'users/login'),
+                os.path.join(ENDPOINT, 'api/users/login'),
                 data=json.dumps(
                     {
                         'email': 'diamond.alex97@gmail.com',
@@ -129,7 +143,7 @@ class TestCase(unittest.TestCase):
             )
             self.assertEqual(resp.status_code, 200)
 
-            resp = session.get(ENDPOINT)
+            resp = session.get(os.path.join(ENDPOINT, 'api'))
             self.assertEqual(resp.status_code, 200)
 
     def test_wrong_basic_auth(self):
@@ -138,7 +152,7 @@ class TestCase(unittest.TestCase):
 
     def test_wrong_json_auth(self):
         resp = requests.post(
-            os.path.join(ENDPOINT, 'users/login'),
+            os.path.join(ENDPOINT, 'api/users/login'),
             data=json.dumps(
                 {
                     'email': 'diamond.alex97@gmail.com',
@@ -153,7 +167,16 @@ class TestCase(unittest.TestCase):
         for method in ['get', 'put', 'delete']:
             resp = requests.request(
                 method,
-                os.path.join(ENDPOINT, 'users/0'),
+                os.path.join(ENDPOINT, 'api/users/0'),
+                auth=('superadmin', 'superadmin')
+            )
+            self.assertEqual(resp.status_code, 404)
+            self.assertEqual(resp.text, 'User not found')
+
+        for method in ['get', 'put']:
+            resp = requests.request(
+                method,
+                os.path.join(ENDPOINT, 'api/users/0/avatar'),
                 auth=('superadmin', 'superadmin')
             )
             self.assertEqual(resp.status_code, 404)
@@ -161,7 +184,7 @@ class TestCase(unittest.TestCase):
 
     def test_list_users(self):
         resp = requests.get(
-            os.path.join(ENDPOINT, 'users'),
+            os.path.join(ENDPOINT, 'api/users'),
             auth=('superadmin', 'superadmin')
         )
         data = json.loads(resp.text)
@@ -172,7 +195,7 @@ class TestCase(unittest.TestCase):
 
     def test_get_user(self):
         resp = requests.get(
-            os.path.join(ENDPOINT, 'users/{}'.format(self.user_2['id'])),
+            os.path.join(ENDPOINT, 'api/users/{}'.format(self.user_2['id'])),
             auth=('superadmin', 'superadmin')
         )
 
@@ -194,7 +217,7 @@ class TestCase(unittest.TestCase):
         }
 
         resp = requests.post(
-            os.path.join(ENDPOINT, 'users'),
+            os.path.join(ENDPOINT, 'api/users'),
             data=json.dumps(user_data),
             auth=('superadmin', 'superadmin')
         )
@@ -206,7 +229,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(data[key], value)
 
         resp = requests.get(
-            os.path.join(ENDPOINT, 'users'),
+            os.path.join(ENDPOINT, 'api/users'),
             auth=('superadmin', 'superadmin')
         )
 
@@ -218,7 +241,7 @@ class TestCase(unittest.TestCase):
         self.user_1['subname'] = 'Cheburek'
 
         resp = requests.put(
-            os.path.join(ENDPOINT, 'users/{}'.format(self.user_1['id'])),
+            os.path.join(ENDPOINT, 'api/users/{}'.format(self.user_1['id'])),
             data=json.dumps(dict(self.user_1.items())),
             auth=('superadmin', 'superadmin')
         )
@@ -229,17 +252,88 @@ class TestCase(unittest.TestCase):
 
     def test_delete_user(self):
         resp = requests.delete(
-            os.path.join(ENDPOINT, 'users/{}'.format(self.user_1['id'])),
+            os.path.join(ENDPOINT, 'api/users/{}'.format(self.user_1['id'])),
             auth=('superadmin', 'superadmin')
         )
         self.assertEqual(resp.status_code, 204)
 
         resp = requests.get(
-            os.path.join(ENDPOINT, 'users'),
+            os.path.join(ENDPOINT, 'api/users'),
             auth=('superadmin', 'superadmin')
         )
         data = json.loads(resp.text)
         self.assertEqual(len(data), len(self.list_db_user()))
+
+    def test_user_avatar(self):
+        # try to upload avatar
+        resp = requests.put(
+            os.path.join(ENDPOINT, 'api/users/{}/avatar'.format(self.user_1['id'])),
+            auth=('superadmin', 'superadmin'),
+            data=IMAGE_DATA_1
+        )
+        data = json.loads(resp.text)
+        image_url = data['avatar']
+
+        self.assertEqual(resp.status_code, 200)
+
+        resp = requests.get(
+            '{}{}'.format(ENDPOINT, image_url),
+            auth=('superadmin', 'superadmin')
+        )
+
+        self.assertEqual(IMAGE_DATA_1, resp.content)
+
+        # not send imghash param
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'api/users/{}/avatar'.format(self.user_1['id'])),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.text, 'imghash is required')
+
+        # send invalid imghash
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'api/users/{}/avatar?imghash=123'.format(self.user_1['id'])),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.text, 'Invalid imghash')
+
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'api/users/{}'.format(self.user_1['id'])),
+            auth=('superadmin', 'superadmin')
+        )
+        current_user_state = json.loads(resp.text)
+
+        self.assertEqual(resp.status_code, 200)
+
+        # try to upload another avatar
+        resp = requests.put(
+            os.path.join(ENDPOINT, 'api/users/{}/avatar'.format(self.user_1['id'])),
+            auth=('superadmin', 'superadmin'),
+            data=IMAGE_DATA_2
+        )
+
+        self.assertEqual(resp.status_code, 200)
+        data = json.loads(resp.text)
+        image_url_updated = data['avatar']
+
+        resp = requests.get(
+            '{}{}'.format(ENDPOINT, image_url_updated),
+            auth=('superadmin', 'superadmin')
+        )
+
+        self.assertEqual(IMAGE_DATA_2, resp.content)
+
+        # check deletion of old avatar
+        with self.assertRaises(ClientError):
+            client.head_object(
+                Bucket='users',
+                Key='{}/{}'.format(
+                    current_user_state['id'],
+                    current_user_state['avatar_token']
+                )
+            )
 
 
 if __name__ == '__main__':

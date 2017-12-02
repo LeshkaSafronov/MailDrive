@@ -145,6 +145,9 @@ class UserMixinView(BaseMixinView):
         if not user:
             return web.Response(text='User not found', status=404)
 
+        if 'imghash' not in request.query:
+            return web.Response(text='imghash is required', status=400)
+
         if user['avatar_token'] != request.query['imghash']:
             return web.Response(text='Invalid imghash', status=400)
 
