@@ -30,6 +30,10 @@ def wait_web():
 
 class TestCase(unittest.TestCase):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.db_tables = ['mail_user']
+
     def erase_db(self):
         with psycopg2.connect(settings.CONNECTION_STRING) as conn:
             with conn.cursor() as cursor:
@@ -48,8 +52,24 @@ class TestCase(unittest.TestCase):
                 )
                 return cursor.fetchone()
 
+    def list_db_user(self):
+        with psycopg2.connect(settings.CONNECTION_STRING) as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                cursor.execute(
+                    db.build_universal_select_query('mail_user')
+                )
+                return cursor.fetchall()
+
     def setUp(self):
-        self.db_tables = ['mail_user']
+        self.erase_db()
+
+        self.superadmin = self.add_db_user(
+            {
+                'email': 'superadmin',
+                'password': 'superadmin'
+            }
+        )
+
         self.user_1 = self.add_db_user(
             {
                 'name': 'Alexey',
@@ -86,14 +106,11 @@ class TestCase(unittest.TestCase):
             }
         )
 
-    def tearDown(self):
-        self.erase_db()
-
     def test_basic_auth(self):
         resp_without_auth = requests.get(ENDPOINT)
         self.assertEqual(resp_without_auth.status_code, 401)
 
-        resp = requests.get(ENDPOINT, auth=('diamond.alex97@gmail.com', '123'))
+        resp = requests.get(ENDPOINT, auth=('superadmin', 'superadmin'))
         self.assertEqual(resp.status_code, 200)
 
     def test_auth_via_session(self):
@@ -116,7 +133,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(resp.status_code, 200)
 
     def test_wrong_basic_auth(self):
-        resp = requests.get(ENDPOINT, auth=('diamond.alex97@gmail.com', '1234'))
+        resp = requests.get(ENDPOINT, auth=('superadmin', 'kek'))
         self.assertEqual(resp.status_code, 401)
 
     def test_wrong_json_auth(self):
@@ -137,7 +154,7 @@ class TestCase(unittest.TestCase):
             resp = requests.request(
                 method,
                 os.path.join(ENDPOINT, 'users/0'),
-                auth=('diamond.alex97@gmail.com', '123')
+                auth=('superadmin', 'superadmin')
             )
             self.assertEqual(resp.status_code, 404)
             self.assertEqual(resp.text, 'User not found')
@@ -145,18 +162,18 @@ class TestCase(unittest.TestCase):
     def test_list_users(self):
         resp = requests.get(
             os.path.join(ENDPOINT, 'users'),
-            auth=('diamond.alex97@gmail.com', '123')
+            auth=('superadmin', 'superadmin')
         )
         data = json.loads(resp.text)
 
-        for response, user in zip(data, [self.user_1, self.user_2, self.user_3]):
+        for response, user in zip(data, [self.superadmin, self.user_1, self.user_2, self.user_3]):
             for key, value in user.items():
                 self.assertEqual(response[key], value)
 
     def test_get_user(self):
         resp = requests.get(
             os.path.join(ENDPOINT, 'users/{}'.format(self.user_2['id'])),
-            auth=('diamond.alex97@gmail.com', '123')
+            auth=('superadmin', 'superadmin')
         )
 
         self.assertEqual(resp.status_code, 200)
@@ -179,7 +196,7 @@ class TestCase(unittest.TestCase):
         resp = requests.post(
             os.path.join(ENDPOINT, 'users'),
             data=json.dumps(user_data),
-            auth=('diamond.alex97@gmail.com', '123')
+            auth=('superadmin', 'superadmin')
         )
 
         self.assertEqual(resp.status_code, 201)
@@ -190,11 +207,40 @@ class TestCase(unittest.TestCase):
 
         resp = requests.get(
             os.path.join(ENDPOINT, 'users'),
-            auth=('diamond.alex97@gmail.com', '123')
+            auth=('superadmin', 'superadmin')
         )
 
         data = json.loads(resp.text)
-        self.assertEqual(len(data), 4)
+        self.assertEqual(len(data), len(self.list_db_user()))
+
+    def test_update_user(self):
+        self.user_1['name'] = 'Kek'
+        self.user_1['subname'] = 'Cheburek'
+
+        resp = requests.put(
+            os.path.join(ENDPOINT, 'users/{}'.format(self.user_1['id'])),
+            data=json.dumps(dict(self.user_1.items())),
+            auth=('superadmin', 'superadmin')
+        )
+
+        data = json.loads(resp.text)
+        for key, value in self.user_1.items():
+            self.assertEqual(data[key], value)
+
+    def test_delete_user(self):
+        resp = requests.delete(
+            os.path.join(ENDPOINT, 'users/{}'.format(self.user_1['id'])),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 204)
+
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'users'),
+            auth=('superadmin', 'superadmin')
+        )
+        data = json.loads(resp.text)
+        self.assertEqual(len(data), len(self.list_db_user()))
+
 
 if __name__ == '__main__':
     wait_web()
