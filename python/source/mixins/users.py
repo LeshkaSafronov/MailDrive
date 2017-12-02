@@ -182,12 +182,13 @@ class UserMixinView(BaseMixinView):
                 break
             content += data
 
+        client.delete_object(
+            Bucket='users',
+            Key='{}/{}'.format(user_id, user['avatar_token'])
+        )
+
         token = random.getrandbits(64)
         avatar_url = '/api/users/{}/avatar?imghash={}'.format(user_id, token)
-
-        client.put_object(Bucket='users',
-                          Key='{}/{}'.format(user_id, token),
-                          Body=content)
 
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
@@ -201,4 +202,8 @@ class UserMixinView(BaseMixinView):
                         where={'id': user_id}
                     )
                 )
+
+        client.put_object(Bucket='users',
+                          Key='{}/{}'.format(user_id, token),
+                          Body=content)
         return web.json_response({'avatar': avatar_url}, status=200)
