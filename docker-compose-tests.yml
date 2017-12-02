@@ -10,12 +10,32 @@ services:
     entrypoint: /test-entrypoint.sh
     ports:
       - "8000:8000"
+    environment:
+      DB_HOST: db-test
+      DB_NAME: mail_drive
+      DB_USER: leshka
+      DB_PASSWORD: leshka
+
+      MINIO_HOST: minio1-test
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: set-value-here
+      MINIO_SECRET_KEY: set-value-here
     depends_on:
       - db-test
 
   polygon-test:
     image: python
     command: python3.5 tests.py
+    environment:
+      DB_HOST: db-test
+      DB_NAME: mail_drive
+      DB_USER: leshka
+      DB_PASSWORD: leshka
+
+      MINIO_HOST: minio1-test
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: set-value-here
+      MINIO_SECRET_KEY: set-value-here
     depends_on:
       - web-test
 
