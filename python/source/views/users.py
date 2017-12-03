@@ -1,5 +1,5 @@
 import random
-
+import exceptions
 import db
 
 from aiohttp import web
@@ -26,10 +26,12 @@ class UserViewSet(BaseViewSet):
     DB_TABLE = 'mail_user'
 
 
+
+
     def _register_routes(self):
         self.router.add_get('/api/users', self.list_objects)
         self.router.add_get('/api/users/{user_id:\d+}', self.retrieve_object)
-        self.router.add_post('/api/users', self.create_user)
+        self.router.add_post('/api/users', self.create_object)
         self.router.add_put('/api/users/{user_id:\d+}', self.update_object)
         self.router.add_delete('/api/users/{user_id:\d+}', self.delete_object)
 
@@ -39,32 +41,45 @@ class UserViewSet(BaseViewSet):
         self.router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
         self.router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
 
-    async def create_user(self, request):
-        request_json = await request.json()
-        email, telephone_number = request_json['email'], request_json['telephone_number']
+    async def validate_email(self, request_data):
+        if 'email' not in request_data:
+            raise exceptions.FieldRequired('email')
 
-        async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
+        email = request_data.get('email')
+        if email:
+            async with self._dbpool.acquire() as conn:
+                async with conn.cursor() as cursor:
+                    await cursor.execute(
+                        db.build_universal_select_query(
+                            'mail_user',
+                            where={
+                                'email': email,
+                            }
+                        )
+                    )
+                    data = await cursor.fetchone()
+                    if data:
+                        raise exceptions.UserExists()
 
-                await cursor.execute(db.build_universal_select_query(
-                    'mail_user',
-                    where={
-                        'email': email,
-                        'telephone_number': telephone_number
-                    },
-                    sep=' OR ')
-                )
-                founded_users = await self._fetch_all(cursor)
-                if founded_users:
-                    return web.Response(text='User with supplied email or telephone number already exists',
-                                        status=400)
+    async def validate_telephone_number(self, request_data):
+        if 'telephone_number' not in request_data:
+            raise exceptions.FieldRequired('telephone_number')
 
-                await cursor.execute(db.build_universal_insert_query('mail_user',
-                                                                     fields=request_json.keys(),
-                                                                     values=request_json.values()))
-
-                data = await self._fetch_one(cursor)
-        return web.json_response(data, status=201)
+        telephone_number = request_data.get('telephone_number')
+        if telephone_number:
+            async with self._dbpool.acquire() as conn:
+                async with conn.cursor() as cursor:
+                    await cursor.execute(
+                        db.build_universal_select_query(
+                            'mail_user',
+                            where={
+                                'telephone_number': telephone_number,
+                            }
+                        )
+                    )
+                    data = await cursor.fetchone()
+                    if data:
+                        raise exceptions.UserExists()
 
     async def login(self, request):
         request_json = await request.json()

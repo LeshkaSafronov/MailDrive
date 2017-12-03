@@ -236,6 +236,44 @@ class TestCase(unittest.TestCase):
         data = json.loads(resp.text)
         self.assertEqual(len(data), len(self.list_db_user()))
 
+    def test_create_user_without_email(self):
+        user_data = {
+            'name': 'Jenya',
+            'subname': 'Gusakovskaya',
+            'age': 19,
+            'country': 'Brest',
+            'telephone_number': '03958784',
+            'password': '345345'
+        }
+
+        resp = requests.post(
+            os.path.join(ENDPOINT, 'api/users'),
+            data=json.dumps(user_data),
+            auth=('superadmin', 'superadmin')
+        )
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.text, 'email is required')
+
+    def test_create_user_telephone_number(self):
+        user_data = {
+            'name': 'Jenya',
+            'subname': 'Gusakovskaya',
+            'age': 19,
+            'country': 'Brest',
+            'email': 'ololo.jeka@kek.com',
+            'password': '345345'
+        }
+
+        resp = requests.post(
+            os.path.join(ENDPOINT, 'api/users'),
+            data=json.dumps(user_data),
+            auth=('superadmin', 'superadmin')
+        )
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.text, 'telephone_number is required')
+
     def test_update_user(self):
         self.user_1['name'] = 'Kek'
         self.user_1['subname'] = 'Cheburek'
@@ -245,10 +283,42 @@ class TestCase(unittest.TestCase):
             data=json.dumps(dict(self.user_1.items())),
             auth=('superadmin', 'superadmin')
         )
-
         data = json.loads(resp.text)
         for key, value in self.user_1.items():
             self.assertEqual(data[key], value)
+
+    def test_update_with_existed_email(self):
+        self.user_1['name'] = 'Kek'
+        self.user_1['subname'] = 'Cheburek'
+
+        data = dict(self.user_1.items())
+        data.update({'email': self.user_2['email']})
+
+        resp = requests.put(
+            os.path.join(ENDPOINT, 'api/users/{}'.format(self.user_1['id'])),
+            data=json.dumps(data),
+            auth=('superadmin', 'superadmin')
+        )
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.text, 'User with supplied email or telephone number already exists')
+
+    def test_update_with_existed_telephone_number(self):
+        self.user_1['name'] = 'Kek'
+        self.user_1['subname'] = 'Cheburek'
+
+        data = dict(self.user_1.items())
+        data.update({'telephone_number': self.user_2['telephone_number']})
+
+        resp = requests.put(
+            os.path.join(ENDPOINT, 'api/users/{}'.format(self.user_1['id'])),
+            data=json.dumps(data),
+            auth=('superadmin', 'superadmin')
+        )
+
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.text, 'User with supplied email or telephone number already exists')
+
 
     def test_delete_user(self):
         resp = requests.delete(
