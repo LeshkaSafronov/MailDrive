@@ -4,7 +4,7 @@ import base64
 import aiopg
 
 from views.users import UserViewSet
-# from views.mail import MailViewSet
+from views.mails import MailViewSet
 
 from middlewares.auth_user import auth_middleware
 from cryptography import fernet
@@ -13,15 +13,16 @@ from aiohttp_session import setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from settings import CONNECTION_STRING
 
-class APIServer(web.Application, UserViewSet):
+
+class APIServer(web.Application):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._dbpool = None
 
     def _register_routes(self):
-        UserViewSet._register_routes(self)
-        # MailViewSet._register_routes(self)
+        UserViewSet(self._dbpool).register_routes(self.router)
+        MailViewSet(self._dbpool).register_routes(self.router)
         self.router.add_get('/api', self.welcome)
 
     def welcome(self, request):

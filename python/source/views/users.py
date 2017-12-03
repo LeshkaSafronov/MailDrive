@@ -21,25 +21,24 @@ class UserViewSet(BaseViewSet):
               'password',
               'avatar',
               'avatar_token')
-
     OBJECT_ID = 'user_id'
     DB_TABLE = 'mail_user'
 
+    def __init__(self, dbpool):
+        self._dbpool = dbpool
 
+    def register_routes(self, router):
+        router.add_get('/api/users', self.list_objects)
+        router.add_get('/api/users/{user_id:\d+}', self.retrieve_object)
+        router.add_post('/api/users', self.create_object)
+        router.add_put('/api/users/{user_id:\d+}', self.update_object)
+        router.add_delete('/api/users/{user_id:\d+}', self.delete_object)
 
+        router.add_post('/api/users/login', self.login)
+        router.add_post('/api/users/logout', self.logout)
 
-    def _register_routes(self):
-        self.router.add_get('/api/users', self.list_objects)
-        self.router.add_get('/api/users/{user_id:\d+}', self.retrieve_object)
-        self.router.add_post('/api/users', self.create_object)
-        self.router.add_put('/api/users/{user_id:\d+}', self.update_object)
-        self.router.add_delete('/api/users/{user_id:\d+}', self.delete_object)
-
-        self.router.add_post('/api/users/login', self.login)
-        self.router.add_post('/api/users/logout', self.logout)
-
-        self.router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
-        self.router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
+        router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
+        router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
 
     async def validate_email(self, request_data):
         if 'email' not in request_data:

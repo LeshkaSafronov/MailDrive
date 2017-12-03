@@ -24,6 +24,15 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
         avatar_token VARCHAR(256)
     );
 
+    CREATE TABLE mail_mail (
+        id SERIAL PRIMARY KEY,
+        header VARCHAR(256),
+        content VARCHAR(256),
+        sender_id integer REFERENCES mail_user (id),
+        recipient_id integer REFERENCES mail_user (id),
+        is_deleted boolean DEFAULT false
+    );
+
     INSERT INTO mail_user (email, password)
         VALUES
             ('superadmin', 'superadmin')

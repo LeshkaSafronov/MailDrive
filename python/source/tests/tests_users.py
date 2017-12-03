@@ -1,65 +1,12 @@
 import os
 import unittest
-import settings
-import psycopg2
-import psycopg2.extras
-import logging
-import db
-import json
-from botocore.exceptions import ClientError
-
 import requests
-import time
+import json
+
+from botocore.exceptions import ClientError
 from storage import client
-
-
-WEB_HOST = os.environ['WEB_HOST']
-WEB_PORT = os.environ['WEB_PORT']
-
-ENDPOINT = 'http://{}:{}'.format(WEB_HOST, WEB_PORT)
-
-IMAGE_DATA_1 = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe1\x0c\x02\r:1\x02\x9a\n\x1d\x00\x00\x00\x19tEXtComment\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00\x0cIDAT\x08\xd7c\xf8\xff\xff?\x00\x05\xfe\x02\xfe\xdc\xccY\xe7\x00\x00\x00\x00IEND\xaeB`\x82'
-IMAGE_DATA_2 = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x02\x08\x02\x00\x00\x00\x16\xe3!p\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x07tIME\x07\xe1\x0c\x02\x0f\x0c\x16-\x08\xfam\x00\x00\x00\x19tEXtComment\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00\x10IDAT\x08\xd7c\xf8\xff\xff?\x13\x03\x03\x03\x00\x11\xfe\x03\x00\xf7\xaa\x99O\x00\x00\x00\x00IEND\xaeB`\x82'
-
-
-def wait_web():
-    while True:
-        try:
-            requests.get(ENDPOINT)
-        except requests.exceptions.ConnectionError as e:
-            logging.warning('Cound not connect to {}. Reason {}'.format(ENDPOINT, str(e)))
-        else:
-            break
-        time.sleep(1)
-
-
-class DbMixin:
-
-
-    def erase_db(self, db_table):
-        with psycopg2.connect(settings.CONNECTION_STRING) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute('TRUNCATE {} CASCADE;'.format(db_table))
-
-    def add_db_object(self, db_table, data):
-        with psycopg2.connect(settings.CONNECTION_STRING) as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                cursor.execute(
-                    db.build_universal_insert_query(
-                        db_table,
-                        fields=data.keys(),
-                        values=data.values()
-                    )
-                )
-                return cursor.fetchone()
-
-    def list_db_objects(self, db_table):
-        with psycopg2.connect(settings.CONNECTION_STRING) as conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                cursor.execute(
-                    db.build_universal_select_query(db_table)
-                )
-                return cursor.fetchall()
+from tests_mixins import DbMixin
+from tests_settings import ENDPOINT, IMAGE_DATA_1, IMAGE_DATA_2
 
 
 class UserTests(unittest.TestCase, DbMixin):
@@ -409,86 +356,5 @@ class UserTests(unittest.TestCase, DbMixin):
             )
 
 
-class MailsTests(unittest.TestCase, DbMixin):
-
-    def setUp(self):
-        self.erase_db('mail_user')
-        self.erase_db('mail_mail')
-
-        self.superadmin = self.add_db_object(
-            'mail_user',
-            {
-                'email': 'superadmin',
-                'password': 'superadmin'
-            }
-        )
-
-        self.user_1 = self.add_db_object(
-            'mail_user',
-            {
-                'name': 'Alexey',
-                'subname': 'Safronov',
-                'age': 20,
-                'country': 'Mogilev',
-                'telephone_number': '222322',
-                'email': 'diamond.alex97@gmail.com',
-                'password': '123',
-                'avatar': '',
-                'avatar_token': ''
-            }
-        )
-
-        self.user_2 = self.add_db_object(
-            'mail_user',
-            {
-                'name': 'Vlad',
-                'subname': 'Punko',
-                'age': 20,
-                'country': 'Brest',
-                'telephone_number': '345345345',
-                'email': 'punko.kek@vlad.com',
-                'password': '2345',
-                'avatar': '',
-                'avatar_token': ''
-            }
-        )
-
-        self.mail_1 = self.add_db_object(
-            'mail_mail',
-            {
-                'header': 'Mail1',
-                'content': 'Hello',
-                'sender_id': self.user_1['id'],
-                'recipient_id': self.user_2['id'],
-                'is_deleted': False
-            }
-        )
-
-        self.mail_2 = self.add_db_object(
-            'mail_mail',
-            {
-                'header': 'Mail2',
-                'content': 'Hello',
-                'sender_id': self.user_1['id'],
-                'recipient_id': self.user_2['id'],
-                'is_deleted': False
-            }
-        )
-
-    def test_list_mails(self):
-        resp = requests.get(
-            os.path.join(ENDPOINT, 'api/mails'),
-            auth=('superadmin', 'superadmin')
-        )
-        data = json.loads(resp.text)
-
-        for response, mail in zip(data, [self.mail_1, self.mail_2]):
-            for key, value in mail.items():
-                self.assertEqual(response[key], value)
-
-
-
-
 if __name__ == '__main__':
-    wait_web()
     unittest.main()
