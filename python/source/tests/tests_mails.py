@@ -7,6 +7,8 @@ import logging
 from tests_mixins import DbMixin
 from tests_settings import ENDPOINT
 from tests_settings import IMAGE_DATA_1
+from storage import client
+from botocore.exceptions import ClientError
 
 
 class MailsTests(unittest.TestCase, DbMixin):
@@ -216,6 +218,7 @@ class MailsTests(unittest.TestCase, DbMixin):
         self.assertEqual(resp.status_code, 404)
         self.assertEqual(resp.text, 'Not found')
 
+
         # try to put file to existed mail
         resp = requests.post(
             os.path.join(ENDPOINT, 'api/mails/{}/files'.format(self.mail_1['id'])),
@@ -238,6 +241,24 @@ class MailsTests(unittest.TestCase, DbMixin):
         self.assertEqual(data_info['data_url'], data['data_url'])
 
 
+        # try to get uploaded file info with not existed mail
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'api/mails/{}/files/{}'.format(0, data['id'])),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(resp.text, 'Not found')
+
+
+        # try to get uploaded file info with not existed file
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'api/mails/{}/files/{}'.format(self.mail_1['id'], 0)),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(resp.text, 'Not found')
+
+
         # try to get uploaded file content
         resp = requests.get(
             '{}{}'.format(ENDPOINT, data['data_url']),
@@ -245,6 +266,26 @@ class MailsTests(unittest.TestCase, DbMixin):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content, IMAGE_DATA_1)
+
+
+        # delete file
+        resp = requests.delete(
+            os.path.join(ENDPOINT, 'api/mails/{}/files/{}'.format(self.mail_1['id'], data_info['id'])),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 204)
+
+        # check deleted file
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'api/mails/{}/files/{}'.format(self.mail_1['id'], data_info['id'])),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(resp.text, 'Not found')
+
+        with self.assertRaises(ClientError):
+            client.head_object(Bucket='mails',
+                               Key='{}/files/{}/{}'.format(self.mail_1['id'], data_info['id'], data_info['data_token'])                               )
 
 
 if __name__ == '__main__':

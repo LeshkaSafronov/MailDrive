@@ -37,7 +37,7 @@ class MailViewSet(BaseViewSet):
         router.add_get('/api/mails/{mail_id:\d+}/files/{file_id:\d+}/data', self.get_mail_file_data)
 
         router.add_post('/api/mails/{mail_id:\d+}/files', self.add_mail_file)
-        # router.add_delete('/api/mails/{mail_id:\d+}/files/{file_id:\d+}', self.delete_mail_file)
+        router.add_delete('/api/mails/{mail_id:\d+}/files/{file_id:\d+}', self.delete_mail_file)
 
     async def validate_sender_id(self, request_data):
         if 'sender_id' not in request_data:
@@ -207,6 +207,47 @@ class MailViewSet(BaseViewSet):
                           Body=content)
 
         return web.json_response(dict(updated_db_file), status=200)
+
+    async def delete_mail_file(self, request):
+        mail_id = int(request.match_info['mail_id'])
+        mail = await self.get_object(self.DB_TABLE,
+                                     where={'id': mail_id})
+        if not mail:
+            return web.Response(text='Not found', status=404)
+
+        file_id = int(request.match_info['file_id'])
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                await cursor.execute(
+                    db.build_universal_select_query(
+                        'mail_mail_data',
+                        where={
+                            'id': file_id,
+                            'mail_id': mail_id
+                        }
+                    )
+                )
+                file = await cursor.fetchone()
+
+        if not file:
+            return web.Response(text='Not found', status=404)
+
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    db.build_universal_delete_query(
+                        'mail_mail_data',
+                        where={
+                            'id': file_id,
+                        }
+                    )
+                )
+
+        client.delete_object(
+            Bucket='mails',
+            Key='{}/files/{}/{}'.format(mail_id, file['id'], file['data_token']),
+        )
+        return web.Response(status=204)
 
 
 
