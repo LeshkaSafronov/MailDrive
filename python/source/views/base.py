@@ -8,6 +8,15 @@ from collections import OrderedDict
 
 class BaseViewSet:
 
+    async def read_content(self, request):
+        content = b''
+        while True:
+            data = await request.content.readany()
+            if not data:
+                break
+            content += data
+        return content
+
     async def get_object(self, db_table, where):
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
@@ -66,8 +75,7 @@ class BaseViewSet:
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
                 await cursor.execute(db.build_universal_insert_query(self.DB_TABLE,
-                                                                     fields=request_data.keys(),
-                                                                     values=request_data.values()))
+                                                                     set=request_data))
 
                 data = await self._fetch_one(cursor)
         return web.json_response(data, status=201)

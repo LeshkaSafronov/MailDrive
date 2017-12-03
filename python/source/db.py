@@ -24,11 +24,11 @@ def build_universal_select_query(db_table, where=None, sep=' AND '):
     return query
 
 
-def build_universal_insert_query(db_table, fields, values):
+def build_universal_insert_query(db_table, set):
     return 'INSERT INTO {db_table} ({fields}) VALUES ({values}) RETURNING *;'.format(
         db_table=db_table,
-        fields=",".join(map(str, fields)).replace("'", ''),
-        values=",".join(map(handle_value, values))
+        fields=",".join(map(str, set.keys())).replace("'", ''),
+        values=",".join(map(handle_value, set.values()))
     )
 
 

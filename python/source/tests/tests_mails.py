@@ -6,6 +6,7 @@ import logging
 
 from tests_mixins import DbMixin
 from tests_settings import ENDPOINT
+from tests_settings import IMAGE_DATA_1
 
 
 class MailsTests(unittest.TestCase, DbMixin):
@@ -32,7 +33,7 @@ class MailsTests(unittest.TestCase, DbMixin):
                 'telephone_number': '222322',
                 'email': 'diamond.alex97@gmail.com',
                 'password': '123',
-                'avatar': '',
+                'avatar_url': '',
                 'avatar_token': ''
             }
         )
@@ -47,7 +48,7 @@ class MailsTests(unittest.TestCase, DbMixin):
                 'telephone_number': '345345345',
                 'email': 'punko.kek@vlad.com',
                 'password': '2345',
-                'avatar': '',
+                'avatar_url': '',
                 'avatar_token': ''
             }
         )
@@ -205,6 +206,45 @@ class MailsTests(unittest.TestCase, DbMixin):
         )
         data = json.loads(resp.text)
         self.assertEqual(len(data), len(self.list_db_objects('mail_mail')))
+
+    def test_mail_data(self):
+        # try to put file to not existed mail
+        resp = requests.post(
+            os.path.join(ENDPOINT, 'api/mails/0/files'),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(resp.text, 'Not found')
+
+        # try to put file to existed mail
+        resp = requests.post(
+            os.path.join(ENDPOINT, 'api/mails/{}/files'.format(self.mail_1['id'])),
+            data=IMAGE_DATA_1,
+            auth=('superadmin', 'superadmin')
+        )
+
+        data = json.loads(resp.text)
+        self.assertEqual(resp.status_code, 200)
+
+
+        # try to get uploaded file info
+        resp = requests.get(
+            os.path.join(ENDPOINT, 'api/mails/{}/files/{}'.format(self.mail_1['id'],
+                                                                  data['id'])),
+            auth=('superadmin', 'superadmin')
+        )
+        data_info = json.loads(resp.text)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(data_info['data_url'], data['data_url'])
+
+
+        # try to get uploaded file content
+        resp = requests.get(
+            '{}{}'.format(ENDPOINT, data['data_url']),
+            auth=('superadmin', 'superadmin')
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content, IMAGE_DATA_1)
 
 
 if __name__ == '__main__':

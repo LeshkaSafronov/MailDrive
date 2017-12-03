@@ -31,11 +31,12 @@ def init_client():
             logging.warning('Connection to minio successed!!!')
             break
 
-    try:
-        client.head_bucket(Bucket='users')
-    except ClientError as e:
-        if e.response['Error']['Code'] == '404':
-            client.create_bucket(Bucket = 'users')
+    for bucket in ['users', 'mails']:
+        try:
+            client.head_bucket(Bucket=bucket)
+        except ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                client.create_bucket(Bucket=bucket)
 
     return client
 

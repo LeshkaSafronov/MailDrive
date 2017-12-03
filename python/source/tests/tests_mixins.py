@@ -17,8 +17,7 @@ class DbMixin:
                 cursor.execute(
                     db.build_universal_insert_query(
                         db_table,
-                        fields=data.keys(),
-                        values=data.values()
+                        set=data
                     )
                 )
                 return cursor.fetchone()

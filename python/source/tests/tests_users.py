@@ -32,7 +32,7 @@ class UserTests(unittest.TestCase, DbMixin):
                 'telephone_number': '222322',
                 'email': 'diamond.alex97@gmail.com',
                 'password': '123',
-                'avatar': '',
+                'avatar_url': '',
                 'avatar_token': ''
             }
         )
@@ -47,7 +47,7 @@ class UserTests(unittest.TestCase, DbMixin):
                 'telephone_number': '345345345',
                 'email': 'punko.kek@vlad.com',
                 'password': '2345',
-                'avatar': '',
+                'avatar_url': '',
                 'avatar_token': ''
             }
         )
@@ -62,7 +62,7 @@ class UserTests(unittest.TestCase, DbMixin):
                 'telephone_number': '097654',
                 'email': 'gusakovskaya.jenya@kek.com',
                 'password': '657',
-                'avatar': '',
+                'avatar_url': '',
                 'avatar_token': ''
             }
         )
@@ -292,7 +292,7 @@ class UserTests(unittest.TestCase, DbMixin):
             data=IMAGE_DATA_1
         )
         data = json.loads(resp.text)
-        image_url = data['avatar']
+        image_url = data['avatar_url']
 
         self.assertEqual(resp.status_code, 200)
 
@@ -336,7 +336,7 @@ class UserTests(unittest.TestCase, DbMixin):
 
         self.assertEqual(resp.status_code, 200)
         data = json.loads(resp.text)
-        image_url_updated = data['avatar']
+        image_url_updated = data['avatar_url']
 
         resp = requests.get(
             '{}{}'.format(ENDPOINT, image_url_updated),

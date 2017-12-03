@@ -19,7 +19,7 @@ class UserViewSet(BaseViewSet):
               'telephone_number',
               'email',
               'password',
-              'avatar',
+              'avatar_url',
               'avatar_token')
     OBJECT_ID = 'user_id'
     DB_TABLE = 'mail_user'
@@ -146,13 +146,7 @@ class UserViewSet(BaseViewSet):
         if not user:
             return web.Response(text='Not found', status=404)
 
-        content = b''
-        while True:
-            data = await request.content.readany()
-            if not data:
-                break
-            content += data
-
+        content = await self.read_content(request)
         client.delete_object(
             Bucket='users',
             Key='{}/{}'.format(user_id, user['avatar_token'])
@@ -167,7 +161,7 @@ class UserViewSet(BaseViewSet):
                     db.build_universal_update_query(
                         'mail_user',
                         set={
-                            'avatar': avatar_url,
+                            'avatar_url': avatar_url,
                             'avatar_token': token
                         },
                         where={'id': user_id}
@@ -177,4 +171,4 @@ class UserViewSet(BaseViewSet):
         client.put_object(Bucket='users',
                           Key='{}/{}'.format(user_id, token),
                           Body=content)
-        return web.json_response({'avatar': avatar_url}, status=200)
+        return web.json_response({'avatar_url': avatar_url}, status=200)

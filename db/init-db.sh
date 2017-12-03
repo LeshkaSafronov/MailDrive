@@ -20,7 +20,7 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
         telephone_number VARCHAR(32),
         email VARCHAR(254),
         password VARCHAR(256),
-        avatar VARCHAR(256),
+        avatar_url VARCHAR(256),
         avatar_token VARCHAR(256)
     );
 
@@ -31,6 +31,13 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
         sender_id integer REFERENCES mail_user (id),
         recipient_id integer REFERENCES mail_user (id),
         is_deleted boolean DEFAULT false
+    );
+
+    CREATE TABLE mail_mail_data (
+        id SERIAL PRIMARY KEY,
+        data_url VARCHAR(256),
+        data_token VARCHAR(256),
+        mail_id integer REFERENCES mail_mail (id)
     );
 
     INSERT INTO mail_user (email, password)
