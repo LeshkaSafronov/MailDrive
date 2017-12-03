@@ -7,6 +7,14 @@ class UserExists(MailDrive):
         return 'User with supplied email or telephone number already exists'
 
 
+class UserDoesNotExists(MailDrive):
+    def __init__(self, user_id):
+        self.user_id = user_id
+
+    def __str__(self):
+        return 'User with supplied id: {} does not exists'.format(self.user_id)
+
+
 class FieldRequired(MailDrive):
     def __init__(self, field_name):
         self.field_name = field_name

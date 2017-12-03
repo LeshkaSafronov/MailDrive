@@ -45,40 +45,38 @@ class UserViewSet(BaseViewSet):
             raise exceptions.FieldRequired('email')
 
         email = request_data.get('email')
-        if email:
-            async with self._dbpool.acquire() as conn:
-                async with conn.cursor() as cursor:
-                    await cursor.execute(
-                        db.build_universal_select_query(
-                            'mail_user',
-                            where={
-                                'email': email,
-                            }
-                        )
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    db.build_universal_select_query(
+                        'mail_user',
+                        where={
+                            'email': email,
+                        }
                     )
-                    data = await cursor.fetchone()
-                    if data:
-                        raise exceptions.UserExists()
+                )
+                data = await cursor.fetchone()
+                if data:
+                    raise exceptions.UserExists()
 
     async def validate_telephone_number(self, request_data):
         if 'telephone_number' not in request_data:
             raise exceptions.FieldRequired('telephone_number')
 
         telephone_number = request_data.get('telephone_number')
-        if telephone_number:
-            async with self._dbpool.acquire() as conn:
-                async with conn.cursor() as cursor:
-                    await cursor.execute(
-                        db.build_universal_select_query(
-                            'mail_user',
-                            where={
-                                'telephone_number': telephone_number,
-                            }
-                        )
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    db.build_universal_select_query(
+                        'mail_user',
+                        where={
+                            'telephone_number': telephone_number,
+                        }
                     )
-                    data = await cursor.fetchone()
-                    if data:
-                        raise exceptions.UserExists()
+                )
+                data = await cursor.fetchone()
+                if data:
+                    raise exceptions.UserExists()
 
     async def login(self, request):
         request_json = await request.json()
