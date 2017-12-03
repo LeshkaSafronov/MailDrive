@@ -1,5 +1,6 @@
 import logging
 import random
+import re
 import base64
 import db
 import aiopg
@@ -34,7 +35,7 @@ async def check_basic_auth(request):
 
 @middleware
 async def auth_middleware(request, handler):
-    if request.path == '/api/users/login':
+    if re.match('/api/users/(login|singup)', request.path):
         return await handler(request)
 
     if 'Authorization' in request.headers:

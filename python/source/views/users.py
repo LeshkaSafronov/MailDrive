@@ -39,6 +39,7 @@ class UserViewSet(BaseViewSet):
 
         router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
         router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
+        router.add_post('/api/users/singup', self.create_object)
 
     async def validate_email(self, request_data):
         if 'email' not in request_data:
