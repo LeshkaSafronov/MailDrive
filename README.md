@@ -3,52 +3,92 @@ API:
 
 USERS:
 
-GET /users <br />
+POST /api/users/singup <br>
+Sing up user
+
+REQUEST
+```json
+{
+    "name": "Alexey",
+    "subname": "Safronov",
+    "age": 20,
+    "country": "Mogilev",
+    "telephone_number": "222322",
+    "email": "diamond.alex97@gmail.com",
+    "password": "123"
+}
+```
+
+RESPONSE
+```json
+{
+    "id": 2,
+    "name": "Alexey",
+    "subname": "Safronov",
+    "age": 20,
+    "country": "Mogilev",
+    "telephone_number": "222322",
+    "email": "diamond.alex97@gmail.com",
+    "password": "123",
+    "avatar_url": null,
+    "avatar_token": null
+}
+```
+
+GET /api/users <br />
 Get all users
+
+RESPONSE
 ```json
 [
     {
-        "id": 37,
-        "name": "Alexey",
-        "subname": "Gena",
-        "age": 28,
-        "country": "Minsk",
-        "telephone_number": "34573895754",
-        "email": "gena@cheburashka.com",
-        "password": "hello"
+        "id": 1,
+        "name": null,
+        "subname": null,
+        "age": null,
+        "country": null,
+        "telephone_number": null,
+        "email": "superadmin",
+        "password": "superadmin",
+        "avatar_url": null,
+        "avatar_token": null
     },
     {
-        "id": 38,
-        "name": "Leshka",
+        "id": 2,
+        "name": "Alexey",
         "subname": "Safronov",
         "age": 20,
-        "country": "Minsk",
-        "telephone_number": "11111111111111",
-        "email": "gena@alexeyka.com",
-        "password": "kek"
+        "country": "Mogilev",
+        "telephone_number": "222322",
+        "email": "diamond.alex97@gmail.com",
+        "password": "123",
+        "avatar_url": null,
+        "avatar_token": null
     }
 ]
 ```
+<br>
 
-
-GET /users/:id <br />
+GET /api/users/:id <br />
 Get user with supplied id
 
 RESPONSE
 ```json
 {
-    "id": 37,
+    "id": 2,
     "name": "Alexey",
-    "subname": "Gena",
-    "age": 28,
-    "country": "Minsk",
-    "telephone_number": "34573895754",
-    "email": "gena@cheburashka.com",
-    "password": "hello"
+    "subname": "Safronov",
+    "age": 20,
+    "country": "Mogilev",
+    "telephone_number": "222322",
+    "email": "diamond.alex97@gmail.com",
+    "password": "123",
+    "avatar_url": null,
+    "avatar_token": null
 }
 ```
 
-POST /users <br />
+POST /api/users <br />
 Create user
 
 REQUEST
@@ -58,7 +98,7 @@ REQUEST
     "subname": "Gena",
     "age": 28,
     "country": "Mogilev",
-    "telephone_number": "222322",
+    "telephone_number": "3456",
     "email": "gena@cheburashka.com",
     "password": "hello"
 }
@@ -67,47 +107,74 @@ RESPONSE <br />
 Status: 201 CREATED
 ```json
 {
-    "id": 37,
+    "id": 3,
     "name": "Cheburashka",
     "subname": "Gena",
     "age": 28,
     "country": "Mogilev",
-    "telephone_number": "222322",
+    "telephone_number": "3456",
     "email": "gena@cheburashka.com",
-    "password": "hello"
+    "password": "hello",
+    "avatar_url": null,
+    "avatar_token": null
 }
 ```
 
-PUT /users/:id <br />
+PUT /api/users/:id <br />
 Update user with supplied id <br />
 REQUEST
 ```json
 {
-    "id": 37,
-    "name": "Alexey",
+    "id": 3,
+    "name": "Cheburashka",
     "subname": "Gena",
-    "age": 28,
-    "country": "Minsk",
-    "telephone_number": "34573895754",
-    "email": "gena@cheburashka.com",
-    "password": "hello"
+    "age": 1,
+    "country": "Vitebsk"
 }
 ```
 RESPONSE <br >
 Status: 200 OK
 ```json
 {
-    "id": 37,
-    "name": "Alexey",
+    "id": 3,
+    "name": "Cheburashka",
     "subname": "Gena",
-    "age": 28,
-    "country": "Minsk",
-    "telephone_number": "34573895754",
+    "age": 1,
+    "country": "Vitebsk",
+    "telephone_number": "3456",
     "email": "gena@cheburashka.com",
-    "password": "hello"
+    "password": "hello",
+    "avatar_url": null,
+    "avatar_token": null
 }
 ```
 
-DELETE /users/:id <br />
+
+DELETE /api/users/:id <br />
 Delete user with supplied id <br />
 Status: 204 NO CONTENT
+
+
+PUT /api/users/:id/avatar <br />
+Update user avatar <br />
+REQUEST
+
+BINARY FILE
+
+RESPONSE <br >
+Status: 200 OK
+```json
+{
+    "avatar_url": "/api/users/3/avatar?imghash=5722490373467547207"
+}
+```
+
+
+GET /api/users/:id/avatar <br />
+RESPONSE <br />
+Status: 200 OK
+
+BINARY FILE
+
+Content-length: 3111054
+Content-type: image/jpeg
