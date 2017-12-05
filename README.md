@@ -178,3 +178,22 @@ BINARY FILE
 
 Content-length: 3111054
 Content-type: image/jpeg
+
+
+POST /api/users/login <br />
+REQUEST <br />
+
+```json
+{
+   "email": "kek@cheburek.com",
+   "password": "kekker_cheburekker"
+}
+```
+
+RESPONSE <br>
+Status: 200 OK
+
+
+POST /api/users/logout <br />
+RESPONSE <br>
+Status: 200 OK
