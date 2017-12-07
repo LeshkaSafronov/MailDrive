@@ -197,3 +197,165 @@ Status: 200 OK
 POST /api/users/logout <br />
 RESPONSE <br>
 Status: 200 OK
+
+
+GET /api/mails <br />
+RESPONSE <br />
+Status: 200 OK
+```json
+[
+    {
+        "id": 1,
+        "header": "Test",
+        "content": "Content",
+        "sender_id": 2,
+        "recipient_id": 3,
+        "is_deleted": false
+    },
+    {
+        "id": 2,
+        "header": "Second Test",
+        "content": "Content",
+        "sender_id": 2,
+        "recipient_id": 3,
+        "is_deleted": false
+    }
+]
+```
+
+
+GET /api/mails/:id <br />
+RESPONSE <br />
+Status: 200 OK
+```json
+{
+    "id": 1,
+    "header": "Test",
+    "content": "Content",
+    "sender_id": 2,
+    "recipient_id": 3,
+    "is_deleted": false
+}
+```
+
+
+POST /api/mails <br />
+REQUEST <br />
+```json
+{
+	"header": "Test",
+	"content": "Content",
+	"sender_id": 2,
+	"recipient_id": 3
+}
+```
+
+RESPONSE <br>
+Status: 200 OK
+```json
+{
+    "id": 1,
+    "header": "Test",
+    "content": "Content",
+    "sender_id": 2,
+    "recipient_id": 3,
+    "is_deleted": false
+}
+```
+
+
+PUT /api/mails/1 <br />
+REQUEST <br />
+```json
+{
+    "id": 1,
+    "header": "Updated Test",
+    "content": "Updated Content",
+    "sender_id": 2,
+    "recipient_id": 3,
+    "is_deleted": false
+}
+```
+
+RESPONSE <br>
+Status: 200 OK
+```json
+{
+    "id": 1,
+    "header": "Updated Test",
+    "content": "Updated Content",
+    "sender_id": 2,
+    "recipient_id": 3,
+    "is_deleted": false
+}
+```
+
+
+DELETE /api/mails/:id <br />
+RESPONSE <br />
+Status: 204 NO CONTENT
+
+
+GET /api/mails/:mail_id/files <br />
+RESPONSE <br />
+Status: 200 OK
+```json
+[
+    {
+        "id": 1,
+        "header": "/api/mails/2/files/1/data?datahash=8947100722642209191",
+        "content": "8947100722642209191",
+        "sender_id": 2,
+        "recipient_id": 2,
+        "is_deleted": "Second Test"
+    },
+    {
+        "id": 2,
+        "header": "/api/mails/2/files/2/data?datahash=8199864208299188847",
+        "content": "8199864208299188847",
+        "sender_id": 2,
+        "recipient_id": 2,
+        "is_deleted": "Second Test"
+    }
+]
+```
+
+
+GET /api/mails/:mail_id/files/:file_id <br />
+RESPONSE <br />
+Status: 200 OK
+```json
+{
+    "data_token": "8199864208299188847",
+    "data_url": "/api/mails/2/files/2/data?datahash=8199864208299188847",
+    "mail_id": 2,
+    "id": 2
+}
+```
+
+
+GET /api/mails/:mail_id/files/:file_id/data <br />
+REPONSE <br />
+Status: 200 OK
+
+BINARY FILE
+
+
+POST /api/mails/1/files <br />
+REQUEST <br />
+BINARY FILE
+
+RESPONSE <br />
+Status: 200 OK
+```json
+{
+    "data_token": "8199864208299188847",
+    "data_url": "/api/mails/2/files/2/data?datahash=8199864208299188847",
+    "mail_id": 2,
+    "id": 2
+}
+```
+
+DELETE /api/mails/:mail_id/files/:file_id <br />
+RESPONSE <br />
+Status: 204 NO CONTENT
