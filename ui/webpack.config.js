@@ -2,7 +2,7 @@ const webpack = require('webpack');
 const path = require('path');
 
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const CirclDepPlugin = require('circular-dependency-plugin');
+let CircularDependencyPlugin = require('circular-dependency-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
@@ -196,7 +196,7 @@ const webpackConfigs = {
         new HtmlWebpackPlugin({
             template: 'index.html'
         }),
-        new CirclDepPlugin({failOnError: true}),
+        new CircularDependencyPlugin({failOnError: false}),
         new OptimizeCssAssetsPlugin(),
         new webpack.NoErrorsPlugin(),
         new webpack.ProvidePlugin({
