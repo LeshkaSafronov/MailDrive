@@ -1,5 +1,3 @@
-'use strict';
-
 const webpack = require('webpack');
 const path = require('path');
 
@@ -28,6 +26,49 @@ const shirmModules = {
             test: '/angular/',
             loader: 'imports?$=jquery!exports?angular'
         }
+    },
+
+    'bootstrap': {
+        path: path.join(nodeModulesDir, 'bootstrap/dist/js/bootstrap.min.js')
+    },
+
+    'moment': {
+        path: path.join(nodeModulesDir, 'moment/moment')
+    },
+
+    'angular-sanitize': {
+        path: path.join(nodeModulesDir, 'angular-sanitize/angular-sanitize.min'),
+        devPath: path.join(nodeModulesDir, 'angular-sanitize/angular-sanitize')
+    },
+
+    'angular-ui-bootstrap': {
+        path: path.join(nodeModulesDir, 'angular-ui-bootstrap/dist/ui-bootstrap-tpls')
+    },
+
+    'angular-ui-router': {
+        path: path.join(nodeModulesDir, 'angular-ui-router/release/angular-ui-router.min'),
+        devPath: path.join(nodeModulesDir, 'angular-ui-router/release/angular-ui-router')
+    },
+
+    'angular-cookies': {
+        path: path.join(nodeModulesDir, 'angular-cookies/angular-cookies.min'),
+        devPath: path.join(nodeModulesDir, 'angular-cookies/angular-cookies'),
+        loader: {
+            test: '/angular-cookies/',
+            loader: 'import?angular'
+        }
+    },
+
+    'angular-bootstrap-datetimepicker': {
+        path: path.join(nodeModulesDir, 'angular-bootstrap-datetimepicker/src/js/datetimepicker')
+    },
+
+    'angular-bootstrap-datetimepicker-template': {
+        path: path.join(nodeModulesDir, 'angular-bootstrap-datetimepicker/src/js/datetimepicker.templates')
+    },
+
+    'toastr': {
+        path: path.join(nodeModulesDir, 'toastr/toastr')
     }
 };
 
@@ -153,8 +194,7 @@ const webpackConfigs = {
     plugins: [
         new ExtractTextPlugin('main.[contenthash].css'),
         new HtmlWebpackPlugin({
-            template: 'index.html',
-            favicon: 'assets/favicon.iso'
+            template: 'index.html'
         }),
         new CirclDepPlugin({failOnError: true}),
         new OptimizeCssAssetsPlugin(),
