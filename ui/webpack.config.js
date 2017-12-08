@@ -204,7 +204,27 @@ const webpackConfigs = {
             'window.$': 'jquery',
             jQuery: 'jquery'
         })
-    ]
+    ],
+    devServer: {
+        host: '0.0.0.0',
+        port: 8888,
+        contentDir: srcDir,
+        stats: {
+            color: true,
+            chunks: true
+        },
+        proxy: {
+            '/api/*': {
+                target: 'http://0.0.0.0:8080',
+                secure: false,
+                rewrite: function (req) {
+                    if (req.method !== 'GET' && req.headers.referer) {
+                        req.headers.referer = forceReferer || httpOrigin;
+                    }
+                }
+            }
+        }
+    }
 };
 
 module.exports = webpackConfigs;

@@ -1,5 +1,6 @@
 import './main.sass';
 import './vendor.css';
+import './assets/logo.png';
 
 import angular from 'angular';
 import 'angular-sanitize';
@@ -11,6 +12,8 @@ import 'angular-cookies';
 
 // Import components controller
 import * as RootController from 'app/core/root/rootController';
+import * as AuthComponent from 'app/auth/authComponent';
+import * as LoginComponent from 'app/login/loginComponent';
 
 // Create application
 const mainModule = angular.module('mail.drive', [
@@ -43,6 +46,8 @@ routerFn.$inject = [
 ];
 
 function routerFn($stateProvider, $urlRouterProvider) {
+    $urlRouterProvider.otherwise('/');
+    
     // Converts component name to html tags
     const componentNameToHtml = fullName => {
         let tagName = fullName.replace(/[A-Z]/g, (letter, pos) => {
@@ -65,6 +70,35 @@ function routerFn($stateProvider, $urlRouterProvider) {
         });
         $stateProvider.state(name, params);
     };
+
+    const checkAuth = AuthFactory => {
+        return AuthFactory.isAuth()
+        .then(() => {})
+        .catch(() => {});
+    }
+
+    createState('root', {
+        url: '/',
+        template: '<ui-view></ui-view>',
+        controller: RootController.fullName
+    });
+
+    createState('root.logout', {
+        url: 'logout'
+    });
+
+    createState('root.login', {
+        url: 'login',
+        component: LoginComponent
+    });
+
+    createState('root.auth', {
+        component: AuthComponent,
+        resolve: [
+            require('app/core/api/auth/authFactory').fullName,
+            checkAuth
+        ]
+    });
 }
 
 angular.element(document).ready(() => {

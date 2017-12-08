@@ -1,11 +1,11 @@
 version: '3'
 
 services:
-  nginx:
-    image: nginx
-    ports:
-      - "8080:80"
-    command: [nginx, '-g', 'daemon off;']
+  # nginx:
+  #   image: nginx
+  #   ports:
+  #     - "8080:80"
+  #   command: [nginx, '-g', 'daemon off;']
   db:
     image: db
     volumes:
@@ -14,7 +14,7 @@ services:
     image: python
     entrypoint: /entrypoint.sh
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
       DB_HOST: db
       DB_NAME: mail_drive

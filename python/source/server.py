@@ -43,4 +43,4 @@ class APIServer(web.Application):
         await super().startup()
 
 server = APIServer()
-web.run_app(server, port=8000)
+web.run_app(server, port=8080)

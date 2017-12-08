@@ -1,0 +1,39 @@
+<div style="position: absolute;top: 50%;margin-top: -350px;left: 0;width: 100%;">
+  <div style="width: 50%;margin-left: auto;margin-right: auto;">
+    <div style="padding: 30px;border: 1px solid #ccc;background-color: #fff;border-radius: 3%;">
+      <legend>
+        <div class="login-logo">
+          <img class="rounded" style="width: 100%" ng-src="assets/logo.png">
+        </div>
+      </legend>
+
+      <form name="loginForm" class="login-form">
+        <div class="form-group">
+          <div class="input-group form-row" ng-class="{'has-error' : loginForm.name.$invalid && !loginForm.name.$pristine}">
+            <span class="input-group-addon">
+                <i class="fa fa-user" aria-hidden="true"></i>
+            </span>
+            <input placeholder="Email" type="text" name="name" class="form-control"
+                  ng-model="$ctrl.credentials.email" required style="height: 45px;font-size: 25px;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="input-group form-row" ng-class="{ 'has-error' : loginForm.password.$invalid && !loginForm.password.$pristine}">
+            <span class="input-group-addon">
+                <i class="fa fa-lock" aria-hidden="true"></i>
+            </span>
+            <input placeholder="Password" type="password" name="password" class="form-control"
+                  ng-model="$ctrl.credentials.password"required style="height: 45px;font-size: 25px;">
+          </div>
+        </div>
+
+        <div class="form-group form-row">
+            <button ng-click="$ctrl.login()" class="btn btn-primary btn-block" ng-disabled="loginForm.$invalid">
+                <i class="fa fa-sign-in" aria-hidden="true"></i> Sign in
+            </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
