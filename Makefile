@@ -32,7 +32,7 @@ build-ui:
 
 
 .PHONY: build-nginx
-build-nginx:
+build-nginx: build-ui
 	docker build -t nginx-ui nginx/
 
 
