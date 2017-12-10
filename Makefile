@@ -28,11 +28,6 @@ test: db python
 .PHONY: restart-test
 restart-test: down-test test
 
-.PHONY: build-ui
-build-ui:
-	docker build -t ui ui/
-	docker run ui /bin/bash -c "npm install && npm run build"
-
 .PHONY: install-docker
 install-docker:
 	sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
