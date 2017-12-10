@@ -1,5 +1,3 @@
-import json
-from aiohttp import web
 import base64
 import aiopg
 
@@ -43,4 +41,4 @@ class APIServer(web.Application):
         await super().startup()
 
 server = APIServer()
-web.run_app(server, port=8080)
+web.run_app(server, port=8000)
