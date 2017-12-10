@@ -31,7 +31,11 @@ restart-test: down-test test
 .PHONY: build-ui
 build-ui:
 	docker build -t ui ui/
-	docker run ui /bin/bash -c "npm install && npm run build"
+	docker run \
+	    -it \
+	    --volume ${PWD}/nginx/ui:/uibuild \
+	    ui \
+	    /bin/bash -c "npm install && npm run build && cp -r /source/build/* /uibuild"
 
 .PHONY: install-docker
 install-docker:
