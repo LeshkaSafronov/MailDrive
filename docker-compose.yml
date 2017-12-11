@@ -80,3 +80,7 @@ volumes:
   minio-volume4:
   postgres-volume:
 
+networks:
+  default:
+    external:
+      name: proxy-nginx

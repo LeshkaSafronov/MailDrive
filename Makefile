@@ -40,6 +40,10 @@ build-db:
 
 .PHONY: up
 up: build-db build-python build-nginx
+	if ! docker network ls | awk '{ print $$2 }' | grep proxy-nginx; \
+		then \
+			docker network create proxy-nginx; \
+	fi;
 	docker-compose up
 
 .PHONY: down
