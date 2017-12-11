@@ -14,11 +14,15 @@ from botocore.exceptions import ClientError
 class MailsTests(unittest.TestCase, DbMixin):
 
     def setUp(self):
-        self.erase_db('mail_user')
-        self.erase_db('mail_mail')
+        for db_table in ['maildrive_user',
+                         'maildrive_mail',
+                         'maildrive_mail_data',
+                         'maildrive_mailgroup',
+                         'maildrive_user_mail']:
+            self.erase_db(db_table)
 
         self.superadmin = self.add_db_object(
-            'mail_user',
+            'maildrive_user',
             {
                 'email': 'superadmin',
                 'password': 'superadmin'
@@ -26,7 +30,7 @@ class MailsTests(unittest.TestCase, DbMixin):
         )
 
         self.user_1 = self.add_db_object(
-            'mail_user',
+            'maildrive_user',
             {
                 'name': 'Alexey',
                 'subname': 'Safronov',
@@ -41,7 +45,7 @@ class MailsTests(unittest.TestCase, DbMixin):
         )
 
         self.user_2 = self.add_db_object(
-            'mail_user',
+            'maildrive_user',
             {
                 'name': 'Vlad',
                 'subname': 'Punko',
@@ -56,24 +60,22 @@ class MailsTests(unittest.TestCase, DbMixin):
         )
 
         self.mail_1 = self.add_db_object(
-            'mail_mail',
+            'maildrive_mail',
             {
                 'header': 'Mail1',
                 'content': 'Hello',
                 'sender_id': self.user_1['id'],
                 'recipient_id': self.user_2['id'],
-                'is_deleted': False
             }
         )
 
         self.mail_2 = self.add_db_object(
-            'mail_mail',
+            'maildrive_mail',
             {
                 'header': 'Mail2',
                 'content': 'Hello',
                 'sender_id': self.user_1['id'],
                 'recipient_id': self.user_2['id'],
-                'is_deleted': False
             }
         )
 
@@ -106,7 +108,6 @@ class MailsTests(unittest.TestCase, DbMixin):
             'content': 'Kek',
             'sender_id': self.user_2['id'],
             'recipient_id': self.user_1['id'],
-            'is_deleted': False
         }
 
         resp = requests.post(
@@ -127,14 +128,13 @@ class MailsTests(unittest.TestCase, DbMixin):
         )
 
         data = json.loads(resp.text)
-        self.assertEqual(len(data), len(self.list_db_objects('mail_mail')))
+        self.assertEqual(len(data), len(self.list_db_objects('maildrive_mail')))
 
     def test_create_mail_with_not_existed_sender(self):
         mail_data = {
             'header': 'NewMail',
             'content': 'Kek',
             'sender_id': 0,
-            'is_deleted': False
         }
 
         resp = requests.post(
@@ -152,7 +152,6 @@ class MailsTests(unittest.TestCase, DbMixin):
             'content': 'Kek',
             'sender_id': self.user_1['id'],
             'recipient_id': 0,
-            'is_deleted': False
         }
 
         resp = requests.post(
@@ -207,7 +206,7 @@ class MailsTests(unittest.TestCase, DbMixin):
             auth=('superadmin', 'superadmin')
         )
         data = json.loads(resp.text)
-        self.assertEqual(len(data), len(self.list_db_objects('mail_mail')))
+        self.assertEqual(len(data), len(self.list_db_objects('maildrive_mail')))
 
     def test_mail_data(self):
         # try to put file to not existed mail

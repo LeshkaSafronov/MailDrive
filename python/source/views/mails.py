@@ -16,11 +16,10 @@ class MailViewSet(BaseViewSet):
               'header',
               'content',
               'sender_id',
-              'recipient_id',
-              'is_deleted')
+              'recipient_id')
 
     OBJECT_ID = 'mail_id'
-    DB_TABLE = 'mail_mail'
+    DB_TABLE = 'maildrive_mail'
 
     def __init__(self, dbpool):
         self._dbpool = dbpool
@@ -48,7 +47,7 @@ class MailViewSet(BaseViewSet):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
-                        'mail_user',
+                        'maildrive_user',
                         where={
                             'id': sender_id,
                         }
@@ -65,7 +64,7 @@ class MailViewSet(BaseViewSet):
                 async with conn.cursor() as cursor:
                     await cursor.execute(
                         db.build_universal_select_query(
-                            'mail_user',
+                            'maildrive_user',
                             where={
                                 'id': recipient_id,
                             }
@@ -87,7 +86,7 @@ class MailViewSet(BaseViewSet):
                 await cursor.execute(
                     'SELECT * FROM {} \
                         INNER JOIN \
-                            mail_mail ON mail_mail.id = mail_mail_data.mail_id;'.format('mail_mail_data')
+                            maildrive_mail ON maildrive_mail.id = maildrive_mail_data.mail_id;'.format('maildrive_mail_data')
                 )
                 data = await self._fetch_all(cursor)
                 return web.json_response(data, status=200)
@@ -104,7 +103,7 @@ class MailViewSet(BaseViewSet):
             async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
-                        'mail_mail_data',
+                        'maildrive_mail_data',
                         where={
                             'id': file_id,
                             'mail_id': mail_id
@@ -129,7 +128,7 @@ class MailViewSet(BaseViewSet):
             async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
-                        'mail_mail_data',
+                        'maildrive_mail_data',
                         where={
                             'id': file_id,
                             'mail_id': mail_id
@@ -176,7 +175,7 @@ class MailViewSet(BaseViewSet):
             async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(
                     db.build_universal_insert_query(
-                        'mail_mail_data',
+                        'maildrive_mail_data',
                         set={
                             'mail_id': mail_id
                         }
@@ -189,7 +188,7 @@ class MailViewSet(BaseViewSet):
 
                 await cursor.execute(
                     db.build_universal_update_query(
-                        'mail_mail_data',
+                        'maildrive_mail_data',
                         set={
                             'data_url': data_url,
                             'data_token': token
@@ -220,7 +219,7 @@ class MailViewSet(BaseViewSet):
             async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
-                        'mail_mail_data',
+                        'maildrive_mail_data',
                         where={
                             'id': file_id,
                             'mail_id': mail_id
@@ -236,7 +235,7 @@ class MailViewSet(BaseViewSet):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     db.build_universal_delete_query(
-                        'mail_mail_data',
+                        'maildrive_mail_data',
                         where={
                             'id': file_id,
                         }

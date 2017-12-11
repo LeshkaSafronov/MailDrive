@@ -12,10 +12,15 @@ from tests_settings import ENDPOINT, IMAGE_DATA_1, IMAGE_DATA_2
 class UserTests(unittest.TestCase, DbMixin):
 
     def setUp(self):
-        self.erase_db('mail_user')
+        for db_table in ['maildrive_user',
+                         'maildrive_mail',
+                         'maildrive_mail_data',
+                         'maildrive_mailgroup',
+                         'maildrive_user_mail']:
+            self.erase_db(db_table)
 
         self.superadmin = self.add_db_object(
-            'mail_user',
+            'maildrive_user',
             {
                 'email': 'superadmin',
                 'password': 'superadmin'
@@ -23,7 +28,7 @@ class UserTests(unittest.TestCase, DbMixin):
         )
 
         self.user_1 = self.add_db_object(
-            'mail_user',
+            'maildrive_user',
             {
                 'name': 'Alexey',
                 'subname': 'Safronov',
@@ -38,7 +43,7 @@ class UserTests(unittest.TestCase, DbMixin):
         )
 
         self.user_2 = self.add_db_object(
-            'mail_user',
+            'maildrive_user',
             {
                 'name': 'Vlad',
                 'subname': 'Punko',
@@ -53,7 +58,7 @@ class UserTests(unittest.TestCase, DbMixin):
         )
 
         self.user_3 = self.add_db_object(
-            'mail_user',
+            'maildrive_user',
             {
                 'name': 'Jenya',
                 'subname': 'Gusakovskaya',
@@ -184,7 +189,7 @@ class UserTests(unittest.TestCase, DbMixin):
         )
 
         data = json.loads(resp.text)
-        self.assertEqual(len(data), len(self.list_db_objects('mail_user')))
+        self.assertEqual(len(data), len(self.list_db_objects('maildrive_user')))
 
     def test_create_user_without_email(self):
         user_data = {
@@ -282,7 +287,7 @@ class UserTests(unittest.TestCase, DbMixin):
             auth=('superadmin', 'superadmin')
         )
         data = json.loads(resp.text)
-        self.assertEqual(len(data), len(self.list_db_objects('mail_user')))
+        self.assertEqual(len(data), len(self.list_db_objects('maildrive_user')))
 
     def test_user_avatar(self):
         # try to upload avatar

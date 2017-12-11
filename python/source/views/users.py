@@ -21,8 +21,9 @@ class UserViewSet(BaseViewSet):
               'password',
               'avatar_url',
               'avatar_token')
+
     OBJECT_ID = 'user_id'
-    DB_TABLE = 'mail_user'
+    DB_TABLE = 'maildrive_user'
 
     def __init__(self, dbpool):
         self._dbpool = dbpool
@@ -50,7 +51,7 @@ class UserViewSet(BaseViewSet):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
-                        'mail_user',
+                        'maildrive_user',
                         where={
                             'email': email,
                         }
@@ -69,7 +70,7 @@ class UserViewSet(BaseViewSet):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
-                        'mail_user',
+                        'maildrive_user',
                         where={
                             'telephone_number': telephone_number,
                         }
@@ -87,7 +88,7 @@ class UserViewSet(BaseViewSet):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
-                        'mail_user',
+                        'maildrive_user',
                         where={
                             'email': email,
                             'password': password
@@ -109,7 +110,7 @@ class UserViewSet(BaseViewSet):
 
     async def get_avatar(self, request):
         user_id = int(request.match_info['user_id'])
-        user = await self.get_object('mail_user',
+        user = await self.get_object('maildrive_user',
                                      where={'id': user_id})
         if not user:
             return web.Response(text='Not found', status=404)
@@ -142,7 +143,7 @@ class UserViewSet(BaseViewSet):
     async def set_avatar(self, request):
         user_id = int(request.match_info['user_id'])
 
-        user = await self.get_object('mail_user',
+        user = await self.get_object('maildrive_user',
                                      where={'id': user_id})
         if not user:
             return web.Response(text='Not found', status=404)
@@ -160,7 +161,7 @@ class UserViewSet(BaseViewSet):
             async with conn.cursor() as cursor:
                 await cursor.execute(
                     db.build_universal_update_query(
-                        'mail_user',
+                        'maildrive_user',
                         set={
                             'avatar_url': avatar_url,
                             'avatar_token': token

@@ -11,7 +11,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
 EOSQL
 
 PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka <<-EOSQL
-    CREATE TABLE mail_user (
+    CREATE TABLE maildrive_user (
         id SERIAL PRIMARY KEY,
         name VARCHAR(256),
         subname VARCHAR(256),
@@ -24,23 +24,45 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
         avatar_token VARCHAR(256)
     );
 
-    CREATE TABLE mail_mail (
+    CREATE TABLE maildrive_mail (
         id SERIAL PRIMARY KEY,
         header VARCHAR(256),
         content VARCHAR(256),
-        sender_id integer REFERENCES mail_user (id),
-        recipient_id integer REFERENCES mail_user (id),
-        is_deleted boolean DEFAULT false
+        sender_id integer,
+        recipient_id integer
     );
 
-    CREATE TABLE mail_mail_data (
+    CREATE TABLE maildrive_mail_data (
         id SERIAL PRIMARY KEY,
         data_url VARCHAR(256),
         data_token VARCHAR(256),
-        mail_id integer REFERENCES mail_mail (id)
+        mail_id integer REFERENCES maildrive_mail (id)
     );
 
-    INSERT INTO mail_user (email, password)
+    CREATE TABLE maildrive_mailgroup (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(256)
+    );
+
+    CREATE TABLE maildrive_user_mail (
+        id SERIAL PRIMARY KEY,
+        user_id integer REFERENCES maildrive_mail (id),
+        mail_id integer REFERENCES maildrive_mail (id),
+        mailgroup_id integer REFERENCES maildrive_mailgroup (id)
+    );
+
+    INSERT INTO maildrive_user (email, password)
         VALUES
-            ('superadmin', 'superadmin')
+            ('superadmin', 'superadmin');
+
+    INSERT INTO maildrive_mailgroup (id, name)
+        VALUES
+            (1, 'Incoming'),
+            (2, 'Outgoing'),
+            (3, 'Drafts');
+
+    BEGIN;
+    LOCK TABLE maildrive_mailgroup IN EXCLUSIVE MODE;
+    SELECT setval('maildrive_mailgroup_id_seq', COALESCE((SELECT MAX(id)+1 FROM maildrive_mailgroup), 1), false);
+    COMMIT;
 EOSQL
