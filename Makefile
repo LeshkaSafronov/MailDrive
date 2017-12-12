@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 .PHONY: install-docker
 install-docker:
 	sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
@@ -63,3 +65,15 @@ test: build-db build-python
 
 .PHONY: restart-test
 restart-test: down-test test
+
+.PHONY: clean
+clean:
+	docker-compose down;
+	if [[ $$(docker container ls -a -q) ]]; \
+		then \
+			docker rm $$(docker container ls -a -q); \
+	fi;
+	if [[ $$(docker volume ls -q) ]]; \
+		then \
+			docker rm $$(docker volume ls -q); \
+	fi;
