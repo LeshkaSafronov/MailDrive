@@ -79,6 +79,30 @@ class MailsTests(unittest.TestCase, DbMixin):
             }
         )
 
+        self.mailgroup_incoming = self.add_db_object(
+            'maildrive_mailgroup',
+            {
+                'id': 1,
+                'name': 'Incoming'
+            }
+        )
+
+        self.mailgroup_outgoing = self.add_db_object(
+            'maildrive_mailgroup',
+            {
+                'id': 2,
+                'name': 'Outgoing'
+            }
+        )
+
+        self.mailgroup_drafts = self.add_db_object(
+            'maildrive_mailgroup',
+            {
+                'id': 3,
+                'name': 'Drafts'
+            }
+        )
+
     def test_list_mails(self):
         resp = requests.get(
             os.path.join(ENDPOINT, 'api/mails'),

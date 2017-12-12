@@ -49,6 +49,9 @@ class BaseViewSet:
                 await validator(request_data)
 
     async def list_objects(self, request):
+        logging.warning('QUERY_PARAMS' in self.__class__.__dict__)
+        logging.warning(hasattr(self.__class__, 'QUERY_PARAMS'))
+
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
                 await cursor.execute(db.build_universal_select_query(self.DB_TABLE))

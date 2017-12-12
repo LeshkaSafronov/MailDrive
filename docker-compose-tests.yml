@@ -3,8 +3,6 @@ version: '3'
 services:
   db-test:
     image: db
-    volumes:
-      - postgres-test-volume:/var/lib/postgresql/data
   web-test:
     image: python
     entrypoint: /entrypoint.sh

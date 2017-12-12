@@ -46,7 +46,7 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
 
     CREATE TABLE maildrive_user_mail (
         id SERIAL PRIMARY KEY,
-        user_id integer REFERENCES maildrive_mail (id),
+        user_id integer REFERENCES maildrive_user (id),
         mail_id integer REFERENCES maildrive_mail (id),
         mailgroup_id integer REFERENCES maildrive_mailgroup (id)
     );

@@ -21,3 +21,13 @@ class FieldRequired(MailDrive):
 
     def __str__(self):
         return '{} is required'.format(self.field_name)
+
+
+class MailRecipientNotExist(MailDrive):
+    def __str__(self):
+        return 'Recipient not setup'
+
+
+class MailAlreadySended(MailDrive):
+    def __str__(self):
+        return 'Mail already sended'

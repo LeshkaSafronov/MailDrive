@@ -3,6 +3,7 @@ import random
 import db
 import exceptions
 import psycopg2.extras
+import logging
 
 from views.base import BaseViewSet
 from aiohttp import web
@@ -18,6 +19,11 @@ class MailViewSet(BaseViewSet):
               'sender_id',
               'recipient_id')
 
+    QUERY_PARAMS = (
+        'user_id',
+        'group_id'
+    )
+
     OBJECT_ID = 'mail_id'
     DB_TABLE = 'maildrive_mail'
 
@@ -27,7 +33,7 @@ class MailViewSet(BaseViewSet):
     def register_routes(self, router):
         router.add_get('/api/mails', self.list_objects)
         router.add_get('/api/mails/{mail_id:\d+}', self.retrieve_object)
-        router.add_post('/api/mails', self.create_object)
+        router.add_post('/api/mails', self.create_mail)
         router.add_put('/api/mails/{mail_id:\d+}', self.update_object)
         router.add_delete('/api/mails/{mail_id:\d+}', self.delete_object)
 
@@ -73,6 +79,79 @@ class MailViewSet(BaseViewSet):
                     data = await cursor.fetchone()
                     if not data:
                         raise exceptions.UserDoesNotExists(recipient_id)
+
+    async def create_mail(self, request):
+        request_data = await request.json()
+
+        try:
+            await self.validation_request_data(request_data, 'post')
+        except exceptions.MailDrive as e:
+            return web.Response(text=str(e), status=400)
+
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(db.build_universal_insert_query(self.DB_TABLE,
+                                                                     set=request_data))
+                data = await self._fetch_one(cursor)
+                logging.warning('data --> {}'.format(data))
+                await cursor.execute(
+                    db.build_universal_insert_query(
+                        'maildrive_user_mail',
+                        set={
+                            'user_id': request_data['sender_id'],
+                            'mail_id': data['id'],
+                            'mailgroup_id': 3
+                        }
+                    )
+                )
+        return web.json_response(data, status=201)
+
+    async def send(self, request):
+        mail_id = int(request.match_info['mail_id'])
+        mail = await self.get_object(self.DB_TABLE,
+                                     where={'id': mail_id})
+        if not mail:
+            return web.Response(text='Not found', status=404)
+
+        if 'recipient_id' not in mail:
+            exceptions.MailRecipientNotExist()
+
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                sender_user_mail = await cursor.execute(
+                    db.build_universal_select_query(
+                        'maildrive_user_mail',
+                        where={
+                            'user_id': mail['sender_id'],
+                            'mail_id': mail['id']
+                        }
+                    )
+                )
+                if sender_user_mail['mailgroup_id'] == 2:
+                    raise exceptions.MailAlreadySended()
+
+                await cursor.execute(
+                    db.build_universal_update_query(
+                        'maildrive_user_mail',
+                        set={
+                            'mailgroup_id': 2
+                        },
+                        where={
+                            'id': sender_user_mail['id']
+                        }
+                    )
+                )
+                await cursor.execute(
+                    db.build_universal_insert_query(
+                        'maildrive_user_mail',
+                        set={
+                            'user_id': mail['recipient_id'],
+                            'mail_id': mail['id'],
+                            'mailgroup_id': 1
+                        }
+                    )
+                )
+        return web.Response(text='Mail sended', status=200)
 
     async def list_mail_files(self, request):
         mail_id = int(request.match_info['mail_id'])
