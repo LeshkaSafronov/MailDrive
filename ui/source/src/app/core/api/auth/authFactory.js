@@ -18,6 +18,10 @@ mod.factory(fullName, ['$http', $http => {
 
         logout() {
             return $http.post('/api/users/logout');
+        },
+
+        update(userId, credentials) {
+            return $http.put('/api/users/'.concat(userId), credentials);
         }
     };
 }]);
