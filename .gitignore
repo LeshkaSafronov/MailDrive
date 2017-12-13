@@ -1,6 +1,6 @@
 .idea/
-ui/node_modules/
-ui/build
+ui/source/node_modules/
+ui/source/build
 postgres-data
 venv/
 nginx/ui
