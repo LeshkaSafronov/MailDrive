@@ -9,7 +9,7 @@ mod.factory(fullName, ['$http', $http => {
         },
 
         login(credentials) {
-            return $http.post('/api/users/login', credentials); 
+            return $http.post('/api/users/login', credentials);
         }
     };
 }]);

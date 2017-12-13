@@ -1,6 +1,5 @@
 import './main.sass';
 import './vendor.css';
-import './assets/logo.png';
 
 import angular from 'angular';
 import 'angular-sanitize';
@@ -47,7 +46,7 @@ routerFn.$inject = [
 
 function routerFn($stateProvider, $urlRouterProvider) {
     $urlRouterProvider.otherwise('/');
-    
+
     // Converts component name to html tags
     const componentNameToHtml = fullName => {
         let tagName = fullName.replace(/[A-Z]/g, (letter, pos) => {
