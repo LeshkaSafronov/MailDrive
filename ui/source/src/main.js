@@ -1,5 +1,6 @@
 import './main.sass';
 import './vendor.css';
+import './assets/avatar.png';
 
 import angular from 'angular';
 import 'angular-sanitize';
@@ -13,6 +14,7 @@ import 'angular-cookies';
 import * as RootController from 'app/core/root/rootController';
 import * as AuthComponent from 'app/auth/authComponent';
 import * as LoginComponent from 'app/login/loginComponent';
+import * as MailsComponent from 'app/mails/mailsComponent';
 
 // Create application
 const mainModule = angular.module('mail.drive', [
@@ -45,10 +47,10 @@ routerFn.$inject = [
 ];
 
 function routerFn($stateProvider, $urlRouterProvider) {
-    $urlRouterProvider.otherwise('/');
+    $urlRouterProvider.otherwise('/mails');
 
     // Converts component name to html tags
-    const componentNameToHtml = fullName => {
+    function componentNameToHtml(fullName) {
         let tagName = fullName.replace(/[A-Z]/g, (letter, pos) => {
             return (pos ? '-' : '') + letter.toLowerCase();
         });
@@ -56,7 +58,7 @@ function routerFn($stateProvider, $urlRouterProvider) {
     };
 
     // Add state to provider
-    const createState = (name, params={}) => {
+    function createState(name, params={}) {
         let views = params.views || {'': params};
         Object.keys(views).forEach(key => {
             let view = views[key];
@@ -69,12 +71,6 @@ function routerFn($stateProvider, $urlRouterProvider) {
         });
         $stateProvider.state(name, params);
     };
-
-    const checkAuth = AuthFactory => {
-        return AuthFactory.isAuth()
-        .then(() => {})
-        .catch(() => {});
-    }
 
     createState('root', {
         url: '/',
@@ -92,11 +88,12 @@ function routerFn($stateProvider, $urlRouterProvider) {
     });
 
     createState('root.auth', {
-        component: AuthComponent,
-        resolve: [
-            require('app/core/api/auth/authFactory').fullName,
-            checkAuth
-        ]
+        component: AuthComponent
+    });
+
+    createState('root.auth.mails', {
+        url: 'mails',
+        component: MailsComponent
     });
 }
 

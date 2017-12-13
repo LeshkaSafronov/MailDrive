@@ -1,0 +1,33 @@
+<section style="width: 100vw; height: 100vh;">
+  <section style="background-color: #303f9f;width: 20%;height: 100%;min-width: 250px;min-height: 100%;">
+    <div style="text-align: center;padding-top: 20px;">
+      <img ng-src="assets/avatar.png" style="width: 250px;border-radius: 50%;border: 5px solid;">
+    </div>
+
+    <div style="color: white">
+      <h2 style="text-align: center;">{{$ctrl.user.name}}  {{$ctrl.user.subname}}</h2>
+      <h3 style="text-align: center;">
+        <span ng-bind="$ctrl.user.email"></span>
+        <i title="logout" class="fa fa-arrow-circle-right pointer" aria-hidden="true" ng-click="$ctrl.logout()"></i>
+      </h3>
+    </div>
+    <hr>
+    <table style="margin-top: 5px;width: 100%;color: white;border-collapse: separate;border-spacing: 10px;">
+      <tr>
+        <td style="padding: 0 15px">CITY:</td>
+        <td ng-bind="$ctrl.user.country"></td>
+      </tr>
+
+      <tr>
+        <td style="padding: 0 15px">AGE</td>
+        <td>{{$ctrl.user.age}} y.o.</td>
+      </tr>
+
+      <tr>
+        <td style="padding: 0 15px">PHONE:</td>
+        <td ng-bind="$ctrl.user.telephone_number"></td>
+      </tr>
+    </table>
+    <hr>
+  </section>
+</section>

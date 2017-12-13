@@ -6,5 +6,22 @@ const TEMPLATE = require('./authForm.html');
 
 mod.component(fullName, {
     template: TEMPLATE,
-    bindings: {authUser: '<'}
+    controller: [
+        '$state',
+        '$rootScope',
+        require('app/core/api/auth/authFactory').fullName,
+        authView
+    ]
 });
+
+function authView($state, $rootScope, AuthFactory) {
+    const $ctrl = angular.extend(this, {
+        $onInit
+    });
+
+    function $onInit() {
+        AuthFactory.isAuth()
+            .then(response => $rootScope.user = angular.copy(response.data))
+            .catch(() => $state.go('root.login'));
+    }
+}

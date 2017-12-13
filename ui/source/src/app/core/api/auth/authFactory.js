@@ -5,7 +5,7 @@ export const fullName = 'authFactory';
 mod.factory(fullName, ['$http', $http => {
     return {
         isAuth() {
-            return $http.get('api');
+            return $http.get('/api/users/is_auth');
         },
 
         login(credentials) {
@@ -14,6 +14,10 @@ mod.factory(fullName, ['$http', $http => {
 
         signUp(credentials) {
             return $http.post('/api/users/singup', credentials);
+        },
+
+        logout() {
+            return $http.post('/api/users/logout');
         }
     };
 }]);

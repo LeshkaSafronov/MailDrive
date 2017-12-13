@@ -23,7 +23,9 @@ function loginView($scope, $state, AuthFactory) {
     });
 
     function $onInit() {
-        AuthFactory.isAuth().then(() => $state.go('auth'));
+        AuthFactory.isAuth()
+            .then(() => $state.go('root.auth.mails'))
+            .catch(() => $state.go('root.login'));
 
         // Toaster settings
         toastr.options = {
@@ -45,7 +47,7 @@ function loginView($scope, $state, AuthFactory) {
 
     function login() {
         AuthFactory.login($ctrl.user)
-            .then(data => console.log(data))
+            .then(data => $state.go('root.auth.mails'))
             .catch(reject => toastr.error(reject.data));
     }
 
@@ -57,7 +59,7 @@ function loginView($scope, $state, AuthFactory) {
 
         $ctrl.user.password = angular.copy($ctrl.passwd.pass);
         AuthFactory.signUp($ctrl.user)
-            .then(data => console.log(data))
+            .then(data => $state.go('root.auth.mails'))
             .catch(reject => toastr.error(reject.data));
     }
 }
