@@ -1,4 +1,5 @@
-<form name="login" class="mail-login-form">
+<!-- Login -->
+<form name="login" class="mail-login-form" ng-if="!$ctrl.isSignUp">
   <h1 class="mail-login-brend">
     <i class="fa fa-envelope" aria-hidden="true"></i>
     <span>MAIL DRIVE</span>
@@ -9,13 +10,84 @@
              ng-model="user.usernmae" placeholder="Username" required>
     </div>
   </div>
-
   <div class="form-group">
     <div class="input-group login-input" ng-class="{'has-error' : login.pass.$invalid && !login.pass.$pristine}">
       <input name="pass" type="password" class="form-control mail-form-control"
              ng-model="user.pass" placeholder="Password" required>
     </div>
   </div>
-
   <button ng-disabled="login.$invalid" type="button" class="btn log-btn">Log in</button>
+  <h4><a class="pointer" ng-click="$ctrl.isSignUp = !$ctrl.isSignUp">Sign Up!?</a></h4>
+</form>
+
+<!-- Sign Up -->
+<form name="signUp" class="mail-login-form sign-up-form" ng-if="$ctrl.isSignUp">
+  <h1 class="mail-login-brend">
+    <i class="fa fa-envelope" aria-hidden="true"></i>
+    <span>MAIL DRIVE</span>
+  </h1>
+
+  <div class="sign-up-inputs">
+    <div class="sign-up-inputs__box">
+      <div class="form-group">
+        <div class="input-group login-input" ng-class="{'has-error' : signUp.name.$invalid && !signUp.name.$pristine}">
+          <input name="name" type="text" class="form-control mail-form-control"
+                 ng-model="user.usernmae" placeholder="Username" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-group login-input" ng-class="{'has-error' : signUp.surname.$invalid && !signUp.surname.$pristine}">
+          <input name="surname" type="text" class="form-control mail-form-control"
+                 ng-model="user.surname" placeholder="Surname" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-group login-input" ng-class="{'has-error' : signUp.age.$invalid && !signUp.age.$pristine}">
+          <input name="age" type="number" class="form-control mail-form-control"
+                 ng-model="user.age" placeholder="Age" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-group login-input" ng-class="{'has-error' : signUp.city.$invalid && !signUp.city.$pristine}">
+          <input name="city" type="text" class="form-control mail-form-control"
+                 ng-model="user.country" placeholder="City" required googleplace>
+        </div>
+      </div>
+    </div>
+
+    <div class="sign-up-inputs__box">
+      <div class="form-group">
+        <div class="input-group login-input" ng-class="{'has-error' : signUp.telephone.$invalid && !signUp.telephone.$pristine}">
+          <input name="telephone" type="text" class="form-control mail-form-control"
+                 ng-model="user.telephone_number" placeholder="Telephone" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-group login-input" ng-class="{'has-error' : signUp.email.$invalid && !signUp.email.$pristine}">
+          <input name="email" type="text" class="form-control mail-form-control"
+                 ng-model="user.email" placeholder="Email" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-group login-input" ng-class="{'has-error' : signUp.pass.$invalid && !signUp.pass.$pristine}">
+          <input name="pass" type="password" class="form-control mail-form-control"
+                 ng-model="user.passwd.pass" placeholder="Password" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-group login-input" ng-class="{'has-error' : signUp.repPass.$invalid && !signUp.repPass.$pristine}">
+          <input name="repPass" type="password" class="form-control mail-form-control"
+                 ng-model="user.passwd.repPass" placeholder="Repeat password" required>
+        </div>
+      </div>
+    </div>
+  </div>
+  <button ng-disabled="signUp.$invalid" type="button" class="btn log-btn">Sign Up</button>
+  <h4><a class="pointer" ng-click="$ctrl.isSignUp = !$ctrl.isSignUp">Login!?</a></h4>
 </form>
