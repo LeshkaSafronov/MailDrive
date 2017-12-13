@@ -214,12 +214,12 @@ const webpackConfigs = {
             chunks: true
         },
         proxy: {
-            '/api/*': {
-                target: 'http://0.0.0.0:8080',
+            '/api*': {
+                target: 'http://127.0.0.1:8000',
                 secure: false,
                 rewrite: function (req) {
                     if (req.method !== 'GET' && req.headers.referer) {
-                        req.headers.referer = forceReferer || httpOrigin;
+                        req.headers.referer = 'http://localhost:8888';
                     }
                 }
             }
