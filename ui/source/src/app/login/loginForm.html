@@ -1,5 +1,5 @@
 <!-- Login -->
-<form name="login" class="mail-login-form" ng-if="!$ctrl.isSignUp">
+<form name="login" class="mail-login-form" ng-if="!$ctrl.isSignUp" ng-submit="$ctrl.login()">
   <h1 class="mail-login-brend">
     <i class="fa fa-envelope" aria-hidden="true"></i>
     <span>MAIL DRIVE</span>
@@ -16,7 +16,7 @@
              ng-model="user.pass" placeholder="Password" required>
     </div>
   </div>
-  <button ng-disabled="login.$invalid" type="button" class="btn log-btn">Log in</button>
+  <button ng-disabled="login.$invalid" type="submit" class="btn log-btn">Log in</button>
   <h4><a class="pointer" ng-click="$ctrl.isSignUp = !$ctrl.isSignUp">Sign Up!?</a></h4>
 </form>
 

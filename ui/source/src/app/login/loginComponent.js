@@ -24,6 +24,6 @@ function loginView($state, AuthFactory) {
     }
 
     function login() {
-        AuthFactory.login($ctrl.credentials).then(data => console.log(data));
+        AuthFactory.login($ctrl.user).then(data => console.log(data));
     }
 }
