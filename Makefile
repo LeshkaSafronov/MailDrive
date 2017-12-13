@@ -75,5 +75,5 @@ clean:
 	fi;
 	if [[ $$(docker volume ls -q) ]]; \
 		then \
-			docker rm $$(docker volume ls -q); \
+			docker volume rm $$(docker volume ls -q); \
 	fi;
