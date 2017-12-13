@@ -41,6 +41,12 @@ class UserViewSet(BaseViewSet):
         router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
         router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
         router.add_post('/api/users/singup', self.create_object)
+        router.add_get('/api/users/is_auth', self.get_auth_user)
+
+    async def get_auth_user(self, request):
+        session = await get_session(request)
+        request.match_info[self.OBJECT_ID] = session['user_id']
+        return await self.retrieve_object(request)
 
     async def validate_email(self, request_data):
         if 'email' not in request_data:
@@ -99,6 +105,7 @@ class UserViewSet(BaseViewSet):
                 if data:
                     session = await get_session(request)
                     session['authorized'] = True
+                    session['user_id'] = data['id']
                     return web.Response(status=200)
                 else:
                     return web.Response(text='Invalide email or password', status=400)
