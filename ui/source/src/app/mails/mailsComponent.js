@@ -12,11 +12,13 @@ mod.component(fullName, {
         '$state',
         '$uibModal',
         require('app/core/api/auth/authFactory').fullName,
+        require('app/core/api/files/fileFactory').fullName,
+        require('app/core/api/files/getAvatar').fullName,
         mailsView
     ]
 });
 
-function mailsView($rootScope, $state, $uibModal, AuthFactory) {
+function mailsView($rootScope, $state, $uibModal, AuthFactory, FileFactory, GetAvatar) {
     const $ctrl = angular.extend(this, {
         changeSettings,
         logout,
@@ -25,6 +27,11 @@ function mailsView($rootScope, $state, $uibModal, AuthFactory) {
 
     function $onInit() {
         $ctrl.user = angular.copy($rootScope.user);
+
+        GetAvatar.getAvatar($ctrl.user.avatar_url)
+            .then(avatar => {
+                $ctrl.a = JSON.stringify(avatar.data.replace(/^data:image\/(png|jpg);base64,/, ""))
+            });
     }
 
     function logout() {
@@ -54,7 +61,11 @@ function mailsView($rootScope, $state, $uibModal, AuthFactory) {
                 $scope.user.telephone_number = angular.copy(user.telephone_number);
 
                 $scope.cancel = () => $uibModalInstance.dismiss('cancel');
-                $scope.apply = () => AuthFactory.update(user.id, $scope.user)
+                $scope.applySettings = () => AuthFactory.update(user.id, $scope.user)
+                    .then(() => window.location.reload());
+
+                $scope.changeAvatar = () => FileFactory.putUpload(
+                    $scope.imgFile, '/api/users/' + user.id + '/avatar')
                     .then(() => window.location.reload());
             }
         });
