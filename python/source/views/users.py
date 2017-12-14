@@ -1,6 +1,7 @@
 import random
 import exceptions
 import db
+import logging
 
 from aiohttp import web
 from aiohttp_session import get_session
@@ -145,7 +146,7 @@ class UserViewSet(BaseViewSet):
         )
 
         content = file['Body'].read()
-        return web.Response(body=content, status=200, content_type='image/jpeg')
+        return web.Response(body=content, status=200, content_type=file['ContentType'])
 
     async def set_avatar(self, request):
         user_id = int(request.match_info['user_id'])
@@ -155,7 +156,10 @@ class UserViewSet(BaseViewSet):
         if not user:
             return web.Response(text='Not found', status=404)
 
-        content = await self.read_content(request)
+        data = await request.post()
+        if 'image' not in data:
+            return web.Response(text='image form field not set', status=400)
+
         client.delete_object(
             Bucket='users',
             Key='{}/{}'.format(user_id, user['avatar_token'])
@@ -176,6 +180,10 @@ class UserViewSet(BaseViewSet):
                         where={'id': user_id}
                     )
                 )
+
+        image = data['image']
+        file = image.file
+        content = file.read()
 
         client.put_object(Bucket='users',
                           Key='{}/{}'.format(user_id, token),
