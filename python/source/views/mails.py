@@ -17,12 +17,8 @@ class MailViewSet(BaseViewSet):
               'header',
               'content',
               'sender_id',
-              'recipient_id')
-
-    QUERY_PARAMS = (
-        'user_id',
-        'group_id'
-    )
+              'recipient_id',
+              'mailgroup_id')
 
     OBJECT_ID = 'mail_id'
     DB_TABLE = 'maildrive_mail'

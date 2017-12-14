@@ -40,14 +40,18 @@ class BaseViewSet:
                 await validator(request_data)
 
     async def list_objects(self, request):
-        logging.warning('QUERY_PARAMS' in self.__class__.__dict__)
-        logging.warning(hasattr(self.__class__, 'QUERY_PARAMS'))
-
+        query_params = {key: int(value) if value.isdigit() else value
+                        for key, value in request.query.items()}
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
-                await cursor.execute(db.build_universal_select_query(self.DB_TABLE))
+                await cursor.execute(
+                    db.build_universal_select_query(
+                        self.DB_TABLE,
+                        where=query_params
+                    )
+                )
                 data = await self._fetch_all(cursor)
-            return web.json_response(data=data)
+        return web.json_response(data=data)
 
     async def retrieve_object(self, request):
         object_id = int(request.match_info[self.OBJECT_ID])
