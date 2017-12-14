@@ -1,0 +1,54 @@
+<div class="modal-parent">
+    <div class="modal-header">
+        <h4 class="modal-title">USER SETTINGS</h4>
+    </div>
+    <div class="modal-body">
+      <form>
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label" for="username">USERNAME:</label>
+          <div class="col-sm-10">
+            <input id="username" type="text" placeholder="Username" class="form-control" ng-model="user.name">
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label" for="subname">SUBNAME:</label>
+          <div class="col-sm-10">
+            <input id="subname" type="text" placeholder="Subname" class="form-control" ng-model="user.subname">
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label" for="email">EMAIL:</label>
+          <div class="col-sm-10">
+            <input id="email" type="text" placeholder="Email" class="form-control" ng-model="user.email">
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label" for="age">AGE:</label>
+          <div class="col-sm-10">
+            <input id="age" type="text" placeholder="Age" class="form-control" ng-model="user.age">
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label" for="phone">PHONE:</label>
+          <div class="col-sm-10">
+            <input id="phone" type="text" placeholder="Phone" class="form-control" ng-model="user.telephone_number">
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <label class="col-sm-2 col-form-label" for="city">CITY:</label>
+          <div class="col-sm-10">
+            <input id="city" type="text" placeholder="City" class="form-control" ng-model="user.country" googleplace>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="button" ng-click="cancel()">Cancel</button>
+        <button class="btn btn-danger" type="button" ng-click="apply()">Apply</button>
+    </div>
+</div>

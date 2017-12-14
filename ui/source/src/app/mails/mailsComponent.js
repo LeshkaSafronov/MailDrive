@@ -1,8 +1,12 @@
 import angular from 'angular';
 import mod from 'app/core/module';
+import toastr from 'toastr';
+import {TOASTR_CONF} from 'app/core/conf/toastrConf';
 export const fullName = 'mailsView';
 
 const TEMPLATE = require('./mailsForm.html');
+const CHANGE_AVATAR_TEMPLATE = require('./dialogsTemplates/avatarDialogForm.html');
+const CHANGE_SETTINGS_TEMPLATE = require('./dialogsTemplates/settingsDialogForm.html');
 const KEY_ESC = 27;
 
 mod.component(fullName, {
@@ -13,62 +17,103 @@ mod.component(fullName, {
         '$uibModal',
         require('app/core/api/auth/authFactory').fullName,
         require('app/core/api/files/fileFactory').fullName,
-        require('app/core/api/files/getAvatar').fullName,
+        require('app/core/api/users/usersFactory').fullName,
         mailsView
     ]
 });
 
-function mailsView($rootScope, $state, $uibModal, AuthFactory, FileFactory, GetAvatar) {
+function mailsView(
+    $rootScope,
+    $state,
+    $uibModal,
+    AuthFactory,
+    FileFactory,
+    UsersFactory
+) {
     const $ctrl = angular.extend(this, {
+        changeAvatar,
         changeSettings,
         logout,
         $onInit
     });
 
     function $onInit() {
+        // Toaster settings
+        toastr.options = TOASTR_CONF;
+
         $ctrl.user = angular.copy($rootScope.user);
-
-        GetAvatar.getAvatar($ctrl.user.avatar_url)
-            .then(avatar => {
-                $ctrl.a = JSON.stringify(avatar.data.replace(/^data:image\/(png|jpg);base64,/, ""))
-            });
+        $ctrl.avatar = $ctrl.user.avatar_url || 'assets/avatar.png';
     }
 
+    // Logout user
     function logout() {
-        AuthFactory.logout().then(() => $state.go('root.login'));
+        AuthFactory.logout()
+            .then(() => {
+                $state.go('root.login');
+                window.location.reload();
+            })
     }
 
-    function changeSettings() {
-        let modalInstance = $uibModal.open({
+    // Change user avatar
+    function changeAvatar() {
+        $uibModal.open({
             animation: true,
             backdrop: true,
-            template: require('./settingsDialogFrom.html'),
+            template: CHANGE_AVATAR_TEMPLATE,
             resolve: {
                 user: () => $ctrl.user
             },
             controller: ($scope, $uibModalInstance, $document, user) => {
                 // Dismiss modal by keyup `ESC`
                 $document.bind('keyup', $event => {
-                    $event.which === KEY_ESC ? $scope.cancel() : null;
+                    angular.equals($event.which, KEY_ESC) ? $scope.cancel() : null;
                 });
 
-                // New user settings
-                $scope.user = {};
-                $scope.user.name = angular.copy(user.name);
-                $scope.user.subname = angular.copy(user.subname);
-                $scope.user.email = angular.copy(user.email);
-                $scope.user.age = angular.copy(user.age);
-                $scope.user.telephone_number = angular.copy(user.telephone_number);
+                $scope.cancel = () => $uibModalInstance.dismiss('cancel');
+                $scope.apply = () => {
+                    // Change avatar
+                    FileFactory.changeAvatar(
+                        $scope.imgFile, ''.concat('/api/users/', user.id, '/avatar'))
+                        .then(() => window.location.reload())
+                        .catch(reject => toastr.error(reject.data));
+                    $uibModalInstance.dismiss('cancel');
+                };
+            }
+        }).result.then(() => true, () => false);
+    }
+
+    // Change settings
+    function changeSettings() {
+        $uibModal.open({
+            animation: true,
+            backdrop: true,
+            template: CHANGE_SETTINGS_TEMPLATE,
+            resolve: {
+                user: () => $ctrl.user
+            },
+            controller: ($scope, $uibModalInstance, $document, user) => {
+                // Dismiss modal by keyup `ESC`
+                $document.bind('keyup', $event => {
+                    angular.equals($event.which, KEY_ESC) ? $scope.cancel() : null;
+                });
+
+                // Set user settings
+                $scope.user = {
+                    name: user.name,
+                    subname: user.subname,
+                    email: user.email,
+                    age: user.age,
+                    country: user.country,
+                    telephone_number: user.telephone_number
+                };
 
                 $scope.cancel = () => $uibModalInstance.dismiss('cancel');
-                $scope.applySettings = () => AuthFactory.update(user.id, $scope.user)
-                    .then(() => window.location.reload());
-
-                $scope.changeAvatar = () => FileFactory.putUpload(
-                    $scope.imgFile, '/api/users/' + user.id + '/avatar')
-                    .then(() => window.location.reload());
+                $scope.apply = () => {
+                    UsersFactory.update(user.id, $scope.user)
+                        .then(() => window.location.reload())
+                        .catch(reject => toastr.error(reject.data));
+                };
             }
-        });
-        return modalInstance.result.then(() => true, () => false);
+        }).result.then(() => true, () => false);
     }
 }

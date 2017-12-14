@@ -2,7 +2,10 @@ import mod from 'app/core/module';
 export const fullName = 'authFactory';
 
 
-mod.factory(fullName, ['$http', $http => {
+mod.factory(fullName, authFactory);
+authFactory.$inject = ['$http'];
+
+function authFactory($http) {
     return {
         isAuth() {
             return $http.get('/api/users/is_auth');
@@ -12,16 +15,8 @@ mod.factory(fullName, ['$http', $http => {
             return $http.post('/api/users/login', credentials);
         },
 
-        signUp(credentials) {
-            return $http.post('/api/users/singup', credentials);
-        },
-
         logout() {
             return $http.post('/api/users/logout');
-        },
-
-        update(userId, credentials) {
-            return $http.put('/api/users/'.concat(userId), credentials);
         }
     };
-}]);
+}

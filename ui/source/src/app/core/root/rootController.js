@@ -16,8 +16,7 @@ function RootController($state, AuthFactory) {
 
     function $onInit() {
         AuthFactory.isAuth()
-        .then(() => $state.go('root.auth.mails'))
-        .catch(() => $state.go('root.login'))
-        .finally(() => console.debug('Root finally!'));
+            .then(() => $state.go('root.auth.mails'))
+            .catch(() => $state.go('root.login'));
     }
 }

@@ -1,18 +1,20 @@
 import mod from 'app/core/main';
+export const fullName = 'googleplace';
 
-mod.directive('googleplace', () => {
+mod.directive(fullName, googleplace);
+
+function googleplace() {
     return {
         require: 'ngModel',
-        link: (scope, element, attrs, model) => {
-            let options = {
+        link: ($scope, $element, $attrs, model) => {
+            $scope.gPlace = new google.maps.places.Autocomplete($element[0], {
                 types: [],
                 componentRestrictions: {}
-            };
-            scope.gPlace = new google.maps.places.Autocomplete(element[0], options);
+            });
 
-            google.maps.event.addListener(scope.gPlace, 'place_changed', () => {
-                scope.$apply(() => model.$setViewValue(element.val()));
+            google.maps.event.addListener($scope.gPlace, 'place_change', () => {
+                $scope.$apply(() => model.$setViewValue(element.val()));
             });
         }
-    }
-});
+    };
+}

@@ -1,6 +1,7 @@
 import angular from 'angular';
 import mod from 'app/core/module';
 import toastr from 'toastr';
+import {TOASTR_CONF} from 'app/core/conf/toastrConf';
 export const fullName = 'loginView';
 
 const TEMPLATE = require('./loginForm.html');
@@ -11,11 +12,12 @@ mod.component(fullName, {
         '$scope',
         '$state',
         require('app/core/api/auth/authFactory').fullName,
+        require('app/core/api/users/usersFactory').fullName,
         loginView
     ]
 })
 
-function loginView($scope, $state, AuthFactory) {
+function loginView($scope, $state, AuthFactory, UserFactory) {
     const $ctrl = angular.extend(this, {
         signUp,
         login,
@@ -23,34 +25,22 @@ function loginView($scope, $state, AuthFactory) {
     });
 
     function $onInit() {
+        // Toaster settings
+        toastr.options = TOASTR_CONF;
+
+        // Check auth
         AuthFactory.isAuth()
             .then(() => $state.go('root.auth.mails'))
             .catch(() => $state.go('root.login'));
-
-        // Toaster settings
-        toastr.options = {
-            closeButton: true,
-            newestOnTop: false,
-            progressBar: true,
-            positionClass: 'toast-bottom-right',
-            preventDuplicates: false,
-            showDuration: 300,
-            hideDuration: 1000,
-            timeOut: 5000,
-            extendedTimeOut: 1000,
-            showEasing: "swing",
-            hideEasing: "linear",
-            showMethod: "fadeIn",
-            hideMethod: "fadeOut"
-        };
     }
 
+    // Login user
     function login() {
         AuthFactory.login($ctrl.user)
             .then(data => $state.go('root.auth.mails'))
             .catch(reject => toastr.error(reject.data));
     }
-
+     // Sign up new user
     function signUp() {
         if (!angular.equals($ctrl.passwd.pass, $ctrl.passwd.repPass)) {
             toastr.error('Password now equal!');
@@ -58,7 +48,7 @@ function loginView($scope, $state, AuthFactory) {
         }
 
         $ctrl.user.password = angular.copy($ctrl.passwd.pass);
-        AuthFactory.signUp($ctrl.user)
+        UserFactory.signUp($ctrl.user)
             .then(data => $state.go('root.auth.mails'))
             .catch(reject => toastr.error(reject.data));
     }
