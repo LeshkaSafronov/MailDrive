@@ -12,6 +12,10 @@ function usersFactory($http) {
 
         update(userId, credentials) {
             return $http.put('/api/users/'.concat(userId), credentials);
+        },
+
+        getUser(userId) {
+            return $http.get('/api/users/'.concat(userId));
         }
     };
 }

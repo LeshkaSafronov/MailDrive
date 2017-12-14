@@ -7,6 +7,7 @@ export const fullName = 'mailsView';
 const TEMPLATE = require('./mailsForm.html');
 const CHANGE_AVATAR_TEMPLATE = require('./dialogsTemplates/avatarDialogForm.html');
 const CHANGE_SETTINGS_TEMPLATE = require('./dialogsTemplates/settingsDialogForm.html');
+const MAIL_DIALOG_TEMPLATE = require('./dialogsTemplates/mailDialogForm.html');
 const KEY_ESC = 27;
 
 mod.component(fullName, {
