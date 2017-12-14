@@ -8,15 +8,6 @@ from collections import OrderedDict
 
 class BaseViewSet:
 
-    async def read_content(self, request):
-        content = b''
-        while True:
-            data = await request.content.readany()
-            if not data:
-                break
-            content += data
-        return content
-
     async def get_object(self, db_table, where):
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:

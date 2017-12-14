@@ -241,7 +241,7 @@ class MailViewSet(BaseViewSet):
         )
 
         content = s3_object['Body'].read()
-        return web.Response(body=content, status=200)
+        return web.Response(body=content, status=200, content_type=s3_object['ContentType'])
 
     async def add_mail_file(self, request):
         mail_id = int(request.match_info['mail_id'])
@@ -249,6 +249,10 @@ class MailViewSet(BaseViewSet):
                                      where={'id': mail_id})
         if not mail:
             return web.Response(text='Not found', status=404)
+
+        data = await request.post()
+        if 'file' not in data:
+            return web.Response(text='file form field not set', status=400)
 
         async with self._dbpool.acquire() as conn:
             async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
@@ -279,7 +283,7 @@ class MailViewSet(BaseViewSet):
                 )
                 updated_db_file = await cursor.fetchone()
 
-        content = await self.read_content(request)
+        content = data['file'].file.read()
         client.put_object(Bucket='mails',
                           Key='{}/files/{}/{}'.format(mail_id, db_file['id'], token),
                           Body=content)

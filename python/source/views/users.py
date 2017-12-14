@@ -181,10 +181,7 @@ class UserViewSet(BaseViewSet):
                     )
                 )
 
-        image = data['image']
-        file = image.file
-        content = file.read()
-
+        content = data['image'].file.read()
         client.put_object(Bucket='users',
                           Key='{}/{}'.format(user_id, token),
                           Body=content)
