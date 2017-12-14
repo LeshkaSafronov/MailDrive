@@ -1,6 +1,7 @@
 import random
 import exceptions
 import db
+import logging
 
 from aiohttp import web
 from aiohttp_session import get_session
@@ -145,7 +146,14 @@ class UserViewSet(BaseViewSet):
         )
 
         content = file['Body'].read()
-        return web.Response(body=content, status=200, content_type='image/jpeg')
+
+        response = web.Response(body=content, status=200, content_type=file['ContentType'])
+        response.headers.update(
+            {
+                'Content-Disposition': 'attachment; filename="{}"'.format(user['avatar_token'])
+            }
+        )
+        return response
 
     async def set_avatar(self, request):
         user_id = int(request.match_info['user_id'])
