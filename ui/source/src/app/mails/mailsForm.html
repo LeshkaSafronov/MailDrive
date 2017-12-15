@@ -45,27 +45,36 @@
   <section class="mails-list">
     <div class="mails-box">
       <table class="table table-dark">
-        <tr class="table-tr" ng-repeat="mail in $ctrl.mails">
+        <tr class="table-tr pointer" ng-repeat="mail in $ctrl.mails">
           <!-- Sender avatar -->
-          <td class="table-image-box">
+          <td class="table-image-box text-center" ng-click="$ctrl.observeMail(mail)">
             <img class="table-image" ng-src="{{mail.avatar}}">
           </td>
 
+          <td class="table-info text-center" ng-bind="$ctrl.getMailGroup(mail.mailgroup_id)"
+              ng-click="$ctrl.observeMail(mail)"></td>
+
           <!-- Sender email -->
-          <td class="table-info" ng-bind="mail.email || '---'"></td>
+          <td class="table-info text-center" ng-bind="mail.email || '---'"
+              ng-click="$ctrl.observeMail(mail)"></td>
 
           <!-- Sender name -->
-          <td class="table-info" ng-bind="mail.name || '---'"></td>
+          <td class="table-info text-center" ng-bind="mail.name || '---'"
+              ng-click="$ctrl.observeMail(mail)"></td>
 
           <!-- Sender city -->
-          <td class="table-info" ng-bind="mail.country || '---'"></td>
+          <td class="table-info text-center" ng-bind="mail.country || '---'"
+              ng-click="$ctrl.observeMail(mail)"></td>
 
           <!-- Mail header -->
-          <td style="vertical-align: middle; width: 20%" ng-bind="mail.header || '---'"></td>
+          <td class="table-info text-center" ng-bind="mail.header || '---'"
+              ng-click="$ctrl.observeMail(mail)"></td>
 
           <!-- Mail actions -->
-          <td class="table-actions">
-            <i class="fa fa-times error-color" aria-hidden="true"></i>
+          <td class="table-actions text-center">
+            <i class="fa fa-times error-color" aria-hidden="true" ng-click="$ctrl.delMail(mail.id)"></i>
+            <i class="fa fa-arrow-circle-right ok-color" aria-hidden="true"
+               ng-if="mail.mailgroup_id === 3" ng-click="$ctrl.sendMail(mail.id)"></i>
           </td>
         </tr>
       </table>

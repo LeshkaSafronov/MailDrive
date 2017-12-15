@@ -9,6 +9,7 @@ const CHANGE_AVATAR_TEMPLATE = require('./dialogsTemplates/avatarDialogForm.html
 const CHANGE_SETTINGS_TEMPLATE = require('./dialogsTemplates/settingsDialogForm.html');
 const MAIL_DIALOG_TEMPLATE = require('./dialogsTemplates/mailDialogForm.html');
 const KEY_ESC = 27;
+const MAIL_GROUP = ['Inbox', 'Sended', 'Draft'];
 
 mod.component(fullName, {
     template: TEMPLATE,
@@ -31,9 +32,13 @@ function mailsView(
     AuthFactory,
     FileFactory,
     UsersFactory,
-    mailsFactory
+    MailsFactory
 ) {
     const $ctrl = angular.extend(this, {
+        delMail,
+        sendMail,
+        getMailGroup,
+        observeMail,
         changeAvatar,
         changeSettings,
         logout,
@@ -47,7 +52,7 @@ function mailsView(
         $ctrl.user = angular.copy($rootScope.user);
         $ctrl.avatar = $ctrl.user.avatar_url || 'assets/avatar.png';
 
-        mailsFactory.getMails($ctrl.user.id)
+        MailsFactory.getMails($ctrl.user.id)
             .then(response => {
                 $ctrl.mails = angular.copy(response.data);
 
@@ -74,6 +79,44 @@ function mailsView(
                 $state.go('root.login');
                 window.location.reload();
             })
+    }
+
+    // Return mail group
+    function getMailGroup(mailGroupId) {
+        return MAIL_GROUP[mailGroupId - 1];
+    }
+
+    function delMail(mailId) {
+        MailsFactory.deleteMail(mailId)
+            .then(() => window.location.reload())
+            .catch(reject => toastr.error(reject.data));
+    }
+
+    function sendMail(mailId) {
+        MailsFactory.sendMail(mailId)
+            .then(() => window.location.reload())
+            .catch(reject => toastr.error(reject.data));
+    }
+
+    // Open mail in dialog
+    function observeMail(mail) {
+        $uibModal.open({
+            animation: true,
+            backdrop: true,
+            template: MAIL_DIALOG_TEMPLATE,
+            resolve: {
+                mailObj: () => mail
+            },
+            controller: ($scope, $uibModalInstance, $document, mailObj) => {
+                // Dismiss modal by keyup `ESC`
+                $document.bind('keyup', $event => {
+                    angular.equals($event.which, KEY_ESC) ? $scope.cancel() : null;
+                });
+
+                $scope.mailInfo = mailObj;
+                $scope.cancel = () => $uibModalInstance.dismiss('cancel');
+            }
+        });
     }
 
     // Change user avatar

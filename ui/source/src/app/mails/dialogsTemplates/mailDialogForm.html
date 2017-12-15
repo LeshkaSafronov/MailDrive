@@ -1,0 +1,20 @@
+<div class="modal-parent">
+  <!-- Dialog header -->
+  <div class="modal-header">
+    <h4 class="modal-title">
+      <img class="table-image" ng-src="{{mailInfo.avatar}}">
+      <span ng-bind="mailInfo.email || '---'"></span>;
+      <span>Theme: {{mailInfo.header || '---'}}</span>
+    </h4>
+  </div>
+
+  <!-- Dialog body -->
+  <div class="modal-body">
+    <pre ng-bind="mailInfo.content"><pre>
+  </div>
+
+  <!-- Dialog footer -->
+  <div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="cancel()">Cancel</button>
+  </div>
+</div>

@@ -8,6 +8,14 @@ function mailsFactory($http) {
     return {
         getMails(userId) {
             return $http.get(''.concat('/api/users/', userId, '/mails'));
+        },
+
+        sendMail(mailId) {
+            return $http.post(''.concat('/api/mails/', mailId, '/send'));
+        },
+
+        deleteMail(mailId) {
+            return $http.delete(''.concat('/api/mails/', mailId));
         }
     };
 }
