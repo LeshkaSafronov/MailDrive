@@ -1,7 +1,10 @@
 import random
 import exceptions
 import db
+import psycopg2
+import psycopg2.extras
 import logging
+import json
 
 from aiohttp import web
 from aiohttp_session import get_session
@@ -43,6 +46,8 @@ class UserViewSet(BaseViewSet):
         router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
         router.add_post('/api/users/singup', self.create_object)
         router.add_get('/api/users/is_auth', self.get_auth_user)
+        router.add_get('/api/users/{user_id:\d+}/mails', self.get_mails)
+
 
     async def get_auth_user(self, request):
         session = await get_session(request)
@@ -186,3 +191,36 @@ class UserViewSet(BaseViewSet):
                           Key='{}/{}'.format(user_id, token),
                           Body=content)
         return web.json_response({'avatar_url': avatar_url}, status=200)
+
+    async def get_mails(self, request):
+        response_user = await self.retrieve_object(request)
+        if response_user.status == 404:
+            return response_user
+
+        user = json.loads(response_user.body.decode())
+
+        where = {
+            'user_id': user['id']
+        }
+
+        mailgroup_id = request.query.get('mailgroup_id')
+        if mailgroup_id:
+            where.update({'mailgroup_id': int(mailgroup_id)})
+
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                await cursor.execute(
+                    db.build_universal_select_query(
+                        'maildrive_user_mail',
+                        where=where
+                    )
+                )
+                records = await cursor.fetchall()
+                mails = []
+                if records:
+                    mail_ids = tuple(record['mail_id'] for record in records)
+                    await cursor.execute(
+                        "SELECT * FROM maildrive_mail WHERE id IN {}".format(mail_ids)
+                    )
+                    mails = list(map(dict, await cursor.fetchall()))
+        return web.json_response(mails)
