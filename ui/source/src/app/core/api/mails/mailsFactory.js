@@ -6,6 +6,10 @@ mailsFactory.$inject = ['$http'];
 
 function mailsFactory($http) {
     return {
+        createMail(mail) {
+            return $http.post('/api/mails', mail);
+        },
+
         getMails(userId) {
             return $http.get(''.concat('/api/users/', userId, '/mails'));
         },

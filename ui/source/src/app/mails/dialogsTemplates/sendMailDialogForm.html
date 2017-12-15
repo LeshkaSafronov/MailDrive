@@ -1,0 +1,32 @@
+<div class="modal-parent">
+  <!-- Dialog header -->
+  <div class="modal-header">
+    <h4 class="modal-title">CREATE MAIL</h4>
+  </div>
+
+  <!-- Dialog body -->
+  <div class="modal-body">
+    <form>
+      <div class="form-group">
+        <label for="send-to">SEND TO:</label>
+        <input ng-model="sendTo" class="form-control" placeholder="Send to..." id="send-to">
+      </div>
+
+      <div class="form-group">
+        <label for="theme">THEME:</label>
+        <input ng-model="theme" class="form-control" placeholder="Mail theme..." id="theme">
+      </div>
+
+      <div class="form-group">
+        <label for="mail">MAIL:</label>
+        <textarea ng-model="mail" class="form-control" rows="5" id="mail" placeholder="Mail body..."></textarea>
+      </div>
+    </form>
+  </div>
+
+  <!-- Dialog footer -->
+  <div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="cancel()">Cancel</button>
+    <button class="btn btn-danger" type="button" ng-click="send()">Send</button>
+  </div>
+</div>

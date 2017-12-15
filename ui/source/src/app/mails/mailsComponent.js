@@ -8,6 +8,7 @@ const TEMPLATE = require('./mailsForm.html');
 const CHANGE_AVATAR_TEMPLATE = require('./dialogsTemplates/avatarDialogForm.html');
 const CHANGE_SETTINGS_TEMPLATE = require('./dialogsTemplates/settingsDialogForm.html');
 const MAIL_DIALOG_TEMPLATE = require('./dialogsTemplates/mailDialogForm.html');
+const SEND_DIALOG_TEMPLATE = require('./dialogsTemplates/sendMailDialogForm.html');
 const KEY_ESC = 27;
 const MAIL_GROUP = ['Inbox', 'Sended', 'Draft'];
 
@@ -35,6 +36,7 @@ function mailsView(
     MailsFactory
 ) {
     const $ctrl = angular.extend(this, {
+        createMail,
         delMail,
         sendMail,
         getMailGroup,
@@ -96,6 +98,28 @@ function mailsView(
         MailsFactory.sendMail(mailId)
             .then(() => window.location.reload())
             .catch(reject => toastr.error(reject.data));
+    }
+
+    function createMail() {
+        $uibModal.open({
+            animation: true,
+            backdrop: true,
+            template: SEND_DIALOG_TEMPLATE,
+            controller: ($scope, $uibModalInstance, $document) => {
+                $scope.cancel = () => $uibModalInstance.dismiss('cancel');
+                $scope.send = () => {
+                    MailsFactory.createMail({
+                        header: $scope.theme,
+                        content: $scope.mail,
+                        sender_id: $ctrl.user.id,
+                        recipient_id: $scope.sendTo
+                    })
+                        .then(() => window.location.reload())
+                        .catch(reject => toastr.error(reject.data));
+                    $uibModalInstance.dismiss('cancel');
+                };
+            }
+        }).result.then(() => true, () => false);
     }
 
     // Open mail in dialog
