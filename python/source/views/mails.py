@@ -33,7 +33,7 @@ class MailViewSet(BaseViewSet):
         router.add_get('/api/mails/{mail_id:\d+}', self.retrieve_mail)
         router.add_post('/api/mails', self.create_mail)
         router.add_put('/api/mails/{mail_id:\d+}', self.update_object)
-        router.add_delete('/api/mails/{mail_id:\d+}', self.delete_object)
+        router.add_delete('/api/mails/{mail_id:\d+}', self.delete_mail)
 
         router.add_get('/api/mails/{mail_id:\d+}/files', self.list_mail_files)
         router.add_get('/api/mails/{mail_id:\d+}/files/{file_id:\d+}', self.get_mail_file)
@@ -344,6 +344,7 @@ class MailViewSet(BaseViewSet):
         if not file:
             return web.Response(text='Not found', status=404)
 
+
         async with self._dbpool.acquire() as conn:
             async with conn.cursor() as cursor:
                 await cursor.execute(
@@ -361,5 +362,42 @@ class MailViewSet(BaseViewSet):
         )
         return web.Response(status=204)
 
+    async def delete_mail(self, request):
 
+        object_id = int(request.match_info[self.OBJECT_ID])
 
+        object = await self.get_object(self.DB_TABLE,
+                                       where={'id': object_id})
+        if not object:
+            return web.Response(text='Not found', status=404)
+
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    db.build_universal_delete_query(
+                        'maildrive_mail_data',
+                        where={
+                            'mail_id': object_id,
+                        }
+                    )
+                )
+
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    db.build_universal_delete_query(
+                        'maildrive_user_mail',
+                        where={
+                            'mail_id': object_id,
+                        }
+                    )
+                )
+
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    db.build_universal_delete_query(
+                        self.DB_TABLE,
+                        where={'id': object_id}
+                    )
+                )
+
+        return web.json_response(status=204)
