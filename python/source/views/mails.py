@@ -42,6 +42,8 @@ class MailViewSet(BaseViewSet):
         router.add_post('/api/mails/{mail_id:\d+}/files', self.add_mail_file)
         router.add_delete('/api/mails/{mail_id:\d+}/files/{file_id:\d+}', self.delete_mail_file)
 
+        router.add_post('/api/mails/{mail_id:\d+}/send', self.send)
+
     async def validate_sender_id(self, request_data):
         if 'sender_id' not in request_data:
             raise exceptions.FieldRequired('sender_id')
@@ -140,8 +142,8 @@ class MailViewSet(BaseViewSet):
             exceptions.MailRecipientNotExist()
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                sender_user_mail = await cursor.execute(
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+                await cursor.execute(
                     db.build_universal_select_query(
                         'maildrive_user_mail',
                         where={
@@ -150,8 +152,10 @@ class MailViewSet(BaseViewSet):
                         }
                     )
                 )
+
+                sender_user_mail = await cursor.fetchone()
                 if sender_user_mail['mailgroup_id'] == 2:
-                    raise exceptions.MailAlreadySended()
+                    return web.Response(text='Mail already sended', status=400)
 
                 await cursor.execute(
                     db.build_universal_update_query(
