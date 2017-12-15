@@ -157,13 +157,16 @@ class MailViewSet(BaseViewSet):
             return web.Response(text='Not found', status=404)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(
-                    'SELECT * FROM {} \
-                        INNER JOIN \
-                            maildrive_mail ON maildrive_mail.id = maildrive_mail_data.mail_id;'.format('maildrive_mail_data')
+                    db.build_universal_select_query(
+                        'maildrive_mail_data',
+                        where={
+                            'mail_id': mail['id']
+                        }
+                    )
                 )
-                data = await self._fetch_all(cursor)
+                data = list(map(dict, await cursor.fetchall()))
                 return web.json_response(data, status=200)
 
     async def get_mail_file(self, request):
