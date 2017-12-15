@@ -4,6 +4,8 @@ import re
 import base64
 import db
 import aiopg
+import psycopg2
+import psycopg2.extras
 
 from aiohttp.web import middleware, Response
 from aiohttp_session import get_session
@@ -18,7 +20,7 @@ async def check_basic_auth(request):
     email, password = base64.b64decode(encoded_string).decode().split(':')
 
     async with aiopg.connect(CONNECTION_STRING) as conn:
-        async with conn.cursor() as cursor:
+        async with conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor) as cursor:
             await cursor.execute(db.build_universal_select_query(
                 'maildrive_user',
                 where={
@@ -26,9 +28,12 @@ async def check_basic_auth(request):
                     'password': password
                 })
             )
-            data = await cursor.fetchone()
-            if not data:
+            user = await cursor.fetchone()
+            if not user:
                 return False
+
+            session = await get_session(request)
+            session['user_id'] = user.id
 
     return True
 

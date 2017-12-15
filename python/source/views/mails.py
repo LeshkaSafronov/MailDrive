@@ -4,11 +4,13 @@ import db
 import exceptions
 import psycopg2.extras
 import logging
+import json
 
 from views.base import BaseViewSet
 from aiohttp import web
 from storage import client
 from botocore.client import ClientError
+from aiohttp_session import get_session
 
 
 class MailViewSet(BaseViewSet):
@@ -27,8 +29,8 @@ class MailViewSet(BaseViewSet):
         self._dbpool = dbpool
 
     def register_routes(self, router):
-        router.add_get('/api/mails', self.list_objects)
-        router.add_get('/api/mails/{mail_id:\d+}', self.retrieve_object)
+        router.add_get('/api/mails', self.list_mails)
+        router.add_get('/api/mails/{mail_id:\d+}', self.retrieve_mail)
         router.add_post('/api/mails', self.create_mail)
         router.add_put('/api/mails/{mail_id:\d+}', self.update_object)
         router.add_delete('/api/mails/{mail_id:\d+}', self.delete_object)
@@ -75,6 +77,47 @@ class MailViewSet(BaseViewSet):
                     data = await cursor.fetchone()
                     if not data:
                         raise exceptions.UserDoesNotExists(recipient_id)
+
+    async def get_mailgroup_id(self, user_id, mail_id):
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor) as cursor:
+                await cursor.execute(
+                    db.build_universal_select_query(
+                        'maildrive_user_mail',
+                        where={
+                            'user_id': user_id,
+                            'mail_id': mail_id
+                        }
+                    )
+                )
+                record = await cursor.fetchone()
+        return record.mailgroup_id
+
+    async def list_mails(self, request):
+        response = await self.list_objects(request)
+        if response.status != 200:
+            return response
+
+        session = await get_session(request)
+        user_id = session['user_id']
+
+        async with self._dbpool.acquire() as conn:
+            mails = json.loads(response.body.decode())
+            for mail in mails:
+                mail['mailgroup_id'] = await self.get_mailgroup_id(user_id, mail['id'])
+        return web.json_response(mails)
+
+    async def retrieve_mail(self, request):
+        response = await self.retrieve_object(request)
+        if response.status != 200:
+            return response
+
+        session = await get_session(request)
+        user_id = session['user_id']
+
+        mail = json.loads(response.body.decode())
+        mail['mailgroup_id'] = await self.get_mailgroup_id(user_id, mail['id'])
+        return web.json_response(mail)
 
     async def create_mail(self, request):
         request_data = await request.json()
