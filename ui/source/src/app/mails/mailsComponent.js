@@ -19,6 +19,7 @@ mod.component(fullName, {
         require('app/core/api/auth/authFactory').fullName,
         require('app/core/api/files/fileFactory').fullName,
         require('app/core/api/users/usersFactory').fullName,
+        require('app/core/api/mails/mailsFactory').fullName,
         mailsView
     ]
 });
@@ -29,7 +30,8 @@ function mailsView(
     $uibModal,
     AuthFactory,
     FileFactory,
-    UsersFactory
+    UsersFactory,
+    mailsFactory
 ) {
     const $ctrl = angular.extend(this, {
         changeAvatar,
@@ -44,6 +46,25 @@ function mailsView(
 
         $ctrl.user = angular.copy($rootScope.user);
         $ctrl.avatar = $ctrl.user.avatar_url || 'assets/avatar.png';
+
+        mailsFactory.getMails($ctrl.user.id)
+            .then(response => {
+                $ctrl.mails = angular.copy(response.data);
+
+                // Get info about sender
+                $ctrl.mails.map(mail => {
+                    UsersFactory.getUser(mail.sender_id)
+                        .then(response => {
+                            mail.avatar = response.data.avatar_url || 'assets/avatar.png';
+                            mail.country = response.data.country;
+                            mail.email = response.data.email;
+                            mail.name = response.data.name;
+                        })
+                        .catch(reject => toastr.error(reject.data));
+                    return mail;
+                });
+            })
+            .catch(reject => toastr.error(reject.data));
     }
 
     // Logout user

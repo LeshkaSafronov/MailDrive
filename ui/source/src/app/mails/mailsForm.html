@@ -33,111 +33,39 @@
     </table>
     <hr class="mails__line">
 
-    <!-- Action section -->
-    <section class="text-center">
-      <button class="btn btn-info pointer" style="width: 50px;height: 50px;border-radius: 50%;font-size: x-large;">
-        <i class="fa fa-paper-plane" aria-hidden="true"></i>
-      </button>
-    </section>
+    <!-- <\!-- Action section -\-> -->
+    <!-- <section class="text-center"> -->
+    <!--   <button class="btn btn-info pointer" style="width: 50px;height: 50px;border-radius: 50%;font-size: x-large;"> -->
+    <!--     <i class="fa fa-paper-plane" aria-hidden="true"></i> -->
+    <!--   </button> -->
+    <!-- </section> -->
   </section>
 
   <!-- Mails section -->
-  <section style="width: 80%; height: 100%;position: relative">
-    <div style="position: absolute;width: 100%;height: 100%;overflow-y: auto;">
+  <section class="mails-list">
+    <div class="mails-box">
       <table class="table table-dark">
-        <tr>
+        <tr class="table-tr" ng-repeat="mail in $ctrl.mails">
           <!-- Sender avatar -->
-          <td style="width: 60px;">
-            <img ng-src="{{$ctrl.avatar}}" style="border-radius: 50%;width: 50px;height: 50px;">
+          <td class="table-image-box">
+            <img class="table-image" ng-src="{{mail.avatar}}">
           </td>
 
           <!-- Sender email -->
-          <td style="vertical-align: middle;width:25%">
-            <span>_vp@example.com</span>
-          </td>
+          <td class="table-info" ng-bind="mail.email || '---'"></td>
 
           <!-- Sender name -->
-          <td style="vertical-align: middle;width:25%">
-            <span>vlad punko</span>
-          </td>
+          <td class="table-info" ng-bind="mail.name || '---'"></td>
 
           <!-- Sender city -->
-          <td style="vertical-align: middle;width:15%">
-            <span>Min</span>
-          </td>
+          <td class="table-info" ng-bind="mail.country || '---'"></td>
 
           <!-- Mail header -->
-          <td style="vertical-align: middle;width:15%">
-            <span>Theme</span>
-          </td>
+          <td style="vertical-align: middle; width: 20%" ng-bind="mail.header || '---'"></td>
 
           <!-- Mail actions -->
-          <td style="vertical-align: middle;width: 60px;">
-            <i class="fa fa-times" aria-hidden="true"></i>
-          </td>
-        </tr>
-
-        <tr>
-          <!-- Sender avatar -->
-          <td style="width: 60px;">
-            <img ng-src="{{$ctrl.avatar}}" style="border-radius: 50%;width: 50px;height: 50px;">
-          </td>
-
-          <!-- Sender email -->
-          <td style="vertical-align: middle;width:25%">
-            <span>_vp@example.com</span>
-          </td>
-
-          <!-- Sender name -->
-          <td style="vertical-align: middle;width:25%">
-            <span>vlad punko</span>
-          </td>
-
-          <!-- Sender city -->
-          <td style="vertical-align: middle;width:15%">
-            <span>Min</span>
-          </td>
-
-          <!-- Mail header -->
-          <td style="vertical-align: middle;width:15%">
-            <span>Theme</span>
-          </td>
-
-          <!-- Mail actions -->
-          <td style="vertical-align: middle;width: 60px;">
-            <i class="fa fa-times" aria-hidden="true"></i>
-          </td>
-        </tr>
-
-        <tr>
-          <!-- Sender avatar -->
-          <td style="width: 60px;">
-            <img ng-src="{{$ctrl.avatar}}" style="border-radius: 50%;width: 50px;height: 50px;">
-          </td>
-
-          <!-- Sender email -->
-          <td style="vertical-align: middle;width:25%">
-            <span>_vp@example.com</span>
-          </td>
-
-          <!-- Sender name -->
-          <td style="vertical-align: middle;width:25%">
-            <span>vlad punko</span>
-          </td>
-
-          <!-- Sender city -->
-          <td style="vertical-align: middle;width:15%">
-            <span>Min</span>
-          </td>
-
-          <!-- Mail header -->
-          <td style="vertical-align: middle;width:15%">
-            <span>Theme</span>
-          </td>
-
-          <!-- Mail actions -->
-          <td style="vertical-align: middle;width: 60px;">
-            <i class="fa fa-times" aria-hidden="true"></i>
+          <td class="table-actions">
+            <i class="fa fa-times error-color" aria-hidden="true"></i>
           </td>
         </tr>
       </table>
