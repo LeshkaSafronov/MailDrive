@@ -78,21 +78,6 @@ class MailViewSet(BaseViewSet):
                     if not data:
                         raise exceptions.UserDoesNotExists(recipient_id)
 
-    async def get_mailgroup_id(self, user_id, mail_id):
-        async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_user_mail',
-                        where={
-                            'user_id': user_id,
-                            'mail_id': mail_id
-                        }
-                    )
-                )
-                record = await cursor.fetchone()
-        return record.mailgroup_id
-
     async def list_mails(self, request):
         response = await self.list_objects(request)
         if response.status != 200:
@@ -101,10 +86,9 @@ class MailViewSet(BaseViewSet):
         session = await get_session(request)
         user_id = session['user_id']
 
-        async with self._dbpool.acquire() as conn:
-            mails = json.loads(response.body.decode())
-            for mail in mails:
-                mail['mailgroup_id'] = await self.get_mailgroup_id(user_id, mail['id'])
+        mails = json.loads(response.body.decode())
+        for mail in mails:
+            mail['mailgroup_id'] = await self.get_mailgroup_id(user_id, mail['id'])
         return web.json_response(mails)
 
     async def retrieve_mail(self, request):

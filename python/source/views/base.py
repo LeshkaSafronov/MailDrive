@@ -1,6 +1,6 @@
 import db
-import logging
 import exceptions
+import psycopg2
 
 from aiohttp import web
 from collections import OrderedDict
@@ -119,3 +119,18 @@ class BaseViewSet:
                     )
                 )
         return web.json_response(status=204)
+
+    async def get_mailgroup_id(self, user_id, mail_id):
+        async with self._dbpool.acquire() as conn:
+            async with conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor) as cursor:
+                await cursor.execute(
+                    db.build_universal_select_query(
+                        'maildrive_user_mail',
+                        where={
+                            'user_id': user_id,
+                            'mail_id': mail_id
+                        }
+                    )
+                )
+                record = await cursor.fetchone()
+        return record.mailgroup_id

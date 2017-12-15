@@ -3,7 +3,6 @@ import exceptions
 import db
 import psycopg2
 import psycopg2.extras
-import logging
 import json
 
 from aiohttp import web
@@ -223,4 +222,6 @@ class UserViewSet(BaseViewSet):
                         "SELECT * FROM maildrive_mail WHERE id IN {}".format(mail_ids)
                     )
                     mails = list(map(dict, await cursor.fetchall()))
+                    for mail in mails:
+                        mail['mailgroup_id'] = await self.get_mailgroup_id(user['id'], mail['id'])
         return web.json_response(mails)
