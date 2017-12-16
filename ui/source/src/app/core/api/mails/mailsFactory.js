@@ -20,6 +20,10 @@ function mailsFactory($http) {
 
         deleteMail(mailId) {
             return $http.delete(''.concat('/api/mails/', mailId));
+        },
+
+        getMailFiles(mailId) {
+            return $http.get(''.concat('/api/mails/', mailId, '/files'));
         }
     };
 }

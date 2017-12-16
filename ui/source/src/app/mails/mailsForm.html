@@ -75,6 +75,8 @@
             <i class="fa fa-times error-color" aria-hidden="true" ng-click="$ctrl.delMail(mail.id)"></i>
             <i class="fa fa-arrow-circle-right ok-color" aria-hidden="true"
                ng-if="mail.mailgroup_id === 3" ng-click="$ctrl.sendMail(mail.id)"></i>
+            <i class="fa fa-plus pointer" aria-hidden="true"
+               ng-if="mail.mailgroup_id === 3" ng-click="$ctrl.attachFile(mail.id)"></i>
           </td>
         </tr>
       </table>

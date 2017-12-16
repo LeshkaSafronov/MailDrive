@@ -9,6 +9,7 @@ const CHANGE_AVATAR_TEMPLATE = require('./dialogsTemplates/avatarDialogForm.html
 const CHANGE_SETTINGS_TEMPLATE = require('./dialogsTemplates/settingsDialogForm.html');
 const MAIL_DIALOG_TEMPLATE = require('./dialogsTemplates/mailDialogForm.html');
 const SEND_DIALOG_TEMPLATE = require('./dialogsTemplates/sendMailDialogForm.html');
+const ATTACH_DIALOG_TEMPLATE = require('./dialogsTemplates/attachDialogForm.html');
 const KEY_ESC = 27;
 const MAIL_GROUP = ['Inbox', 'Sended', 'Draft'];
 
@@ -36,6 +37,7 @@ function mailsView(
     MailsFactory
 ) {
     const $ctrl = angular.extend(this, {
+        attachFile,
         createMail,
         delMail,
         sendMail,
@@ -58,8 +60,12 @@ function mailsView(
             .then(response => {
                 $ctrl.mails = angular.copy(response.data);
 
-                // Get info about sender
+                // Get info about sender and attached files
                 $ctrl.mails.map(mail => {
+                    MailsFactory.getMailFiles(mail.id)
+                        .then(response => mail.files = angular.copy(response.data))
+                        .catch(reject => toastr.error(reject.data));
+
                     UsersFactory.getUser(mail.sender_id)
                         .then(response => {
                             mail.avatar = response.data.avatar_url || 'assets/avatar.png';
@@ -140,7 +146,32 @@ function mailsView(
                 $scope.mailInfo = mailObj;
                 $scope.cancel = () => $uibModalInstance.dismiss('cancel');
             }
-        });
+        }).result.then(() => true, () => false);
+    }
+
+    function attachFile(mailId) {
+        $uibModal.open({
+            animation: true,
+            backdrop: true,
+            template: ATTACH_DIALOG_TEMPLATE,
+            resolve: {
+                mailId: () => mailId
+            },
+            controller: ($scope, $uibModalInstance, $document, mailId) => {
+                // Dismiss modal by keyup `ESC`
+                $document.bind('keyup', $event => {
+                    angular.equals($event.which, KEY_ESC) ? $scope.cancel() : null;
+                });
+
+                $scope.cancel = () => $uibModalInstance.dismiss('cancel');
+                $scope.apply = () => {
+                    FileFactory.attachFile($scope.imgFile, ''.concat('/api/mails/', mailId, '/files'))
+                        .then(() => window.location.reload())
+                        .catch(reject => toastr.error(reject.data));
+                    $uibModalInstance.dismiss('cancel');
+                };
+            }
+        }).result.then(() => true, () => false);
     }
 
     // Change user avatar

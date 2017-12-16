@@ -18,6 +18,18 @@ function filesFactory($http) {
                     'Content-Type': undefined
                 }
             });
+        },
+
+        attachFile(file, url) {
+            let formData = new FormData();
+            formData.append('file', file);
+
+            return $http.post(url, formData, {
+                transformRequest: angular.identity,
+                headers: {
+                    'Content-Type': undefined
+                }
+            });
         }
     };
 }
