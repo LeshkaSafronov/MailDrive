@@ -229,7 +229,7 @@ function mailsView(
 
                 $scope.cancel = () => $uibModalInstance.dismiss('cancel');
                 $scope.apply = () => {
-                    UsersFactory.update(user.id, $scope.user)
+                    UsersFactory.update(user.email, $scope.user)
                         .then(() => window.location.reload())
                         .catch(reject => toastr.error(reject.data));
                 };

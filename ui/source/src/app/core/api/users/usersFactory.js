@@ -10,8 +10,8 @@ function usersFactory($http) {
             return $http.post('/api/users/singup', credentials);
         },
 
-        update(userId, credentials) {
-            return $http.put('/api/users/'.concat(userId), credentials);
+        update(userMail, credentials) {
+            return $http.put('/api/users/'.concat(userMail), credentials);
         },
 
         getUser(userId) {
