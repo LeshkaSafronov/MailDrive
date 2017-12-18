@@ -55,18 +55,16 @@ class MailGroupViewSet(BaseViewSet):
             return web.Response(text='Not found', status=404)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                data = await cursor.execute(
-                    db.build_universal_update_query(
-                        'maildrive_user_mail',
-                        set={
-                            'mailgroup_id': request_data['mailgroup_id']
-                        },
-                        where={
-                            'id': user_mail['id']
-                        }
-                    )
-                )
+            data = await db.exec_universal_update_query(
+                'maildrive_user_mail',
+                set={
+                    'mailgroup_id': request_data['mailgroup_id']
+                },
+                where={
+                    'id': user_mail['id']
+                },
+                conn=conn
+            )
         return web.json_response(data)
 
 

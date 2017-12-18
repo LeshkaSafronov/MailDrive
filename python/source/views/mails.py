@@ -49,35 +49,31 @@ class MailViewSet(BaseViewSet):
 
         sender_id = request_data.get('sender_id')
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_user',
-                        where={
-                            'email': sender_id,
-                        }
-                    )
-                )
-                data = await cursor.fetchone()
-                if not data:
-                    raise exceptions.UserDoesNotExists(sender_id)
+            data = await db.exec_universal_select_query(
+                'maildrive_user',
+                where={
+                    'email': sender_id,
+                },
+                one=True,
+                conn=conn
+            )
+            if not data:
+                raise exceptions.UserDoesNotExists(sender_id)
 
     async def validate_recipient_id(self, request_data):
         recipient_id = request_data.get('recipient_id')
         if recipient_id is not None:
             async with self._dbpool.acquire() as conn:
-                async with conn.cursor() as cursor:
-                    await cursor.execute(
-                        db.build_universal_select_query(
-                            'maildrive_user',
-                            where={
-                                'email': recipient_id,
-                            }
-                        )
-                    )
-                    data = await cursor.fetchone()
-                    if not data:
-                        raise exceptions.UserDoesNotExists(recipient_id)
+                data = await db.exec_universal_select_query(
+                    'maildrive_user',
+                    where={
+                        'email': recipient_id,
+                    },
+                    one=True,
+                    conn=conn
+                )
+                if not data:
+                    raise exceptions.UserDoesNotExists(recipient_id)
 
     async def list_mails(self, request):
         response = await self.list_objects(request)
@@ -113,20 +109,20 @@ class MailViewSet(BaseViewSet):
             return web.Response(text=str(e), status=400)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(db.build_universal_insert_query(self.DB_TABLE,
-                                                                     set=request_data))
-                data = await cursor.fetchone()
-                await cursor.execute(
-                    db.build_universal_insert_query(
-                        'maildrive_user_mail',
-                        set={
-                            'user_id': request_data['sender_id'],
-                            'mail_id': data['id'],
-                            'mailgroup_id': 3
-                        }
-                    )
-                )
+            data = await db.exec_universal_insert_query(
+                self.DB_TABLE,
+                set=request_data,
+                conn=conn
+            )
+            await db.exec_universal_insert_query(
+                'maildrive_user_mail',
+                set={
+                    'user_id': request_data['sender_id'],
+                    'mail_id': data['id'],
+                    'mailgroup_id': 3
+                },
+                conn=conn
+            )
         return web.json_response(dict(data), status=201)
 
     async def send(self, request):
@@ -140,42 +136,38 @@ class MailViewSet(BaseViewSet):
             exceptions.MailRecipientNotExist()
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_user_mail',
-                        where={
-                            'user_id': mail['sender_id'],
-                            'mail_id': mail['id']
-                        }
-                    )
-                )
+            sender_user_mail = await db.exec_universal_select_query(
+                'maildrive_user_mail',
+                where={
+                    'user_id': mail['sender_id'],
+                    'mail_id': mail['id']
+                },
+                one=True,
+                conn=conn
+            )
 
-                sender_user_mail = await cursor.fetchone()
-                if sender_user_mail['mailgroup_id'] == 2:
-                    return web.Response(text='Mail already sended', status=400)
+            if sender_user_mail['mailgroup_id'] == 2:
+                return web.Response(text='Mail already sended', status=400)
 
-                await cursor.execute(
-                    db.build_universal_update_query(
-                        'maildrive_user_mail',
-                        set={
-                            'mailgroup_id': 2
-                        },
-                        where={
-                            'id': sender_user_mail['id']
-                        }
-                    )
-                )
-                await cursor.execute(
-                    db.build_universal_insert_query(
-                        'maildrive_user_mail',
-                        set={
-                            'user_id': mail['recipient_id'],
-                            'mail_id': mail['id'],
-                            'mailgroup_id': 1
-                        }
-                    )
-                )
+            await db.exec_universal_update_query(
+                'maildrive_user_mail',
+                set={
+                    'mailgroup_id': 2
+                },
+                where={
+                    'id': sender_user_mail['id']
+                },
+                conn=conn
+            )
+            await db.exec_universal_insert_query(
+                'maildrive_user_mail',
+                set={
+                    'user_id': mail['recipient_id'],
+                    'mail_id': mail['id'],
+                    'mailgroup_id': 1
+                },
+                conn=conn
+            )
         return web.Response(text='Mail sended', status=200)
 
     async def list_mail_files(self, request):
@@ -186,17 +178,15 @@ class MailViewSet(BaseViewSet):
             return web.Response(text='Not found', status=404)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_mail_data',
-                        where={
-                            'mail_id': mail['id']
-                        }
-                    )
-                )
-                data = list(map(dict, await cursor.fetchall()))
-                return web.json_response(data, status=200)
+            data = await db.exec_universal_select_query(
+                'maildrive_mail_data',
+                where={
+                    'mail_id': mail['id']
+                },
+                conn=conn
+            )
+            data = list(map(dict, data))
+            return web.json_response(data, status=200)
 
     async def get_mail_file(self, request):
         mail_id = int(request.match_info['mail_id'])
@@ -207,17 +197,15 @@ class MailViewSet(BaseViewSet):
 
         file_id = int(request.match_info['file_id'])
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_mail_data',
-                        where={
-                            'id': file_id,
-                            'mail_id': mail_id
-                        }
-                    )
-                )
-                file = await cursor.fetchone()
+            file = await db.exec_universal_select_query(
+                'maildrive_mail_data',
+                where={
+                    'id': file_id,
+                    'mail_id': mail_id
+                },
+                one=True,
+                conn=conn
+            )
 
         if not file:
             return web.Response(text='Not found', status=404)
@@ -232,17 +220,15 @@ class MailViewSet(BaseViewSet):
 
         file_id = int(request.match_info['file_id'])
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_mail_data',
-                        where={
-                            'id': file_id,
-                            'mail_id': mail_id
-                        }
-                    )
-                )
-                file = await cursor.fetchone()
+            file = await db.exec_universal_select_query(
+                'maildrive_mail_data',
+                where={
+                    'id': file_id,
+                    'mail_id': mail_id
+                },
+                one=True,
+                conn=conn
+            )
 
         if not file:
             return web.Response(text='Not found', status=404)
@@ -283,33 +269,28 @@ class MailViewSet(BaseViewSet):
             return web.Response(text='file form field not set', status=400)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_insert_query(
-                        'maildrive_mail_data',
-                        set={
-                            'mail_id': mail_id
-                        }
-                    )
-                )
-                db_file = await cursor.fetchone()
+            db_file = await db.exec_universal_insert_query(
+                'maildrive_mail_data',
+                set={
+                    'mail_id': mail_id
+                },
+                conn=conn
+            )
 
-                token = random.getrandbits(64)
-                data_url = '/api/mails/{}/files/{}/data?datahash={}'.format(mail_id, db_file['id'], token)
+            token = random.getrandbits(64)
+            data_url = '/api/mails/{}/files/{}/data?datahash={}'.format(mail_id, db_file['id'], token)
 
-                await cursor.execute(
-                    db.build_universal_update_query(
-                        'maildrive_mail_data',
-                        set={
-                            'data_url': data_url,
-                            'data_token': token
-                        },
-                        where={
-                            'id': db_file['id']
-                        }
-                    )
-                )
-                updated_db_file = await cursor.fetchone()
+            updated_db_file = await db.exec_universal_update_query(
+                'maildrive_mail_data',
+                set={
+                    'data_url': data_url,
+                    'data_token': token
+                },
+                where={
+                    'id': db_file['id']
+                },
+                conn=conn
+            )
 
         content = data['file'].file.read()
         client.put_object(Bucket='mails',
@@ -327,32 +308,27 @@ class MailViewSet(BaseViewSet):
 
         file_id = int(request.match_info['file_id'])
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_mail_data',
-                        where={
-                            'id': file_id,
-                            'mail_id': mail_id
-                        }
-                    )
-                )
-                file = await cursor.fetchone()
+            file = await db.exec_universal_select_query(
+                'maildrive_mail_data',
+                where={
+                    'id': file_id,
+                    'mail_id': mail_id
+                },
+                conn=conn
+            )
 
         if not file:
             return web.Response(text='Not found', status=404)
 
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(
-                    db.build_universal_delete_query(
-                        'maildrive_mail_data',
-                        where={
-                            'id': file_id,
-                        }
-                    )
-                )
+            await db.exec_universal_delete_query(
+                'maildrive_mail_data',
+                where={
+                    'id': file_id,
+                },
+                conn=conn
+            )
 
         client.delete_object(
             Bucket='mails',
@@ -370,32 +346,24 @@ class MailViewSet(BaseViewSet):
             return web.Response(text='Not found', status=404)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(
-                    db.build_universal_delete_query(
-                        'maildrive_mail_data',
-                        where={
-                            'mail_id': object_id,
-                        }
-                    )
-                )
-
-            async with conn.cursor() as cursor:
-                await cursor.execute(
-                    db.build_universal_delete_query(
-                        'maildrive_user_mail',
-                        where={
-                            'mail_id': object_id,
-                        }
-                    )
-                )
-
-            async with conn.cursor() as cursor:
-                await cursor.execute(
-                    db.build_universal_delete_query(
-                        self.DB_TABLE,
-                        where={self.PK: object_id}
-                    )
-                )
+            await db.exec_universal_delete_query(
+                'maildrive_mail_data',
+                where={
+                    'mail_id': object_id,
+                },
+                conn=conn
+            )
+            await db.exec_universal_delete_query(
+                'maildrive_user_mail',
+                where={
+                    'mail_id': object_id,
+                },
+                conn=conn
+            )
+            await db.exec_universal_delete_query(
+                self.DB_TABLE,
+                where={self.PK: object_id},
+                conn=conn
+            )
 
         return web.json_response(status=204)

@@ -57,18 +57,16 @@ class UserViewSet(BaseViewSet):
 
         email = request_data.get('email')
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_user',
-                        where={
-                            'email': email,
-                        }
-                    )
-                )
-                data = await cursor.fetchone()
-                if data:
-                    raise exceptions.UserExists()
+            data = await db.exec_universal_select_query(
+                'maildrive_user',
+                where={
+                    'email': email
+                },
+                one=True,
+                conn=conn
+            )
+            if data:
+                raise exceptions.UserExists()
 
     async def validate_telephone_number(self, request_data):
         if 'telephone_number' not in request_data:
@@ -76,42 +74,38 @@ class UserViewSet(BaseViewSet):
 
         telephone_number = request_data.get('telephone_number')
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_user',
-                        where={
-                            'telephone_number': telephone_number,
-                        }
-                    )
-                )
-                data = await cursor.fetchone()
-                if data:
-                    raise exceptions.UserExists()
+            data = await db.exec_universal_select_query(
+                'maildrive_user',
+                where={
+                    'telephone_number': telephone_number,
+                },
+                one=True,
+                conn=conn
+            )
+            if data:
+                raise exceptions.UserExists()
 
     async def login(self, request):
         request_json = await request.json()
         email, password = request_json['email'], request_json['password']
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_user',
-                        where={
-                            'email': email,
-                            'password': password
-                        }
-                    )
-                )
-                data = await cursor.fetchone()
-                if data:
-                    session = await get_session(request)
-                    session['authorized'] = True
-                    session[self.PK] = data[self.PK]
-                    return web.Response(status=200)
-                else:
-                    return web.Response(text='Invalide email or password', status=400)
+            data = await db.exec_universal_select_query(
+                'maildrive_user',
+                where={
+                    'email': email,
+                    'password': password
+                },
+                one=True,
+                conn=conn
+            )
+            if data:
+                session = await get_session(request)
+                session['authorized'] = True
+                session[self.PK] = data[self.PK]
+                return web.Response(status=200)
+            else:
+                return web.Response(text='Invalide email or password', status=400)
 
     async def logout(self, request):
         session = await get_session(request)
@@ -151,8 +145,7 @@ class UserViewSet(BaseViewSet):
         return web.Response(body=content, status=200, content_type=file['ContentType'])
 
     async def set_avatar(self, request):
-        user_id = int(request.match_info[self.PK])
-
+        user_id = request.match_info[self.PK]
         user = await self.get_object('maildrive_user',
                                      where={self.PK: user_id})
         if not user:
@@ -171,17 +164,15 @@ class UserViewSet(BaseViewSet):
         avatar_url = '/api/users/{}/avatar?imghash={}'.format(user_id, token)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(
-                    db.build_universal_update_query(
-                        'maildrive_user',
-                        set={
-                            'avatar_url': avatar_url,
-                            'avatar_token': token
-                        },
-                        where={self.PK: user_id}
-                    )
-                )
+            data = await db.exec_universal_update_query(
+                'maildrive_user',
+                set={
+                    'avatar_url': avatar_url,
+                    'avatar_token': token
+                },
+                where={self.PK: user_id},
+                conn=conn
+            )
 
         content = data['image'].file.read()
         client.put_object(Bucket='users',
@@ -205,17 +196,15 @@ class UserViewSet(BaseViewSet):
             where.update({'mailgroup_id': int(mailgroup_id)})
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-                await cursor.execute(
-                    db.build_universal_select_query(
-                        'maildrive_user_mail',
-                        where=where
-                    )
-                )
-                records = await cursor.fetchall()
-                mails = []
-                if records:
-                    mail_ids = '({})'.format(','.join(str(record['mail_id']) for record in records))
+            records = await db.exec_universal_select_query(
+                'maildrive_user_mail',
+                where=where,
+                conn=conn
+            )
+            mails = []
+            if records:
+                mail_ids = '({})'.format(','.join(str(record['mail_id']) for record in records))
+                async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                     await cursor.execute(
                         "SELECT * FROM maildrive_mail WHERE id IN {}".format(mail_ids)
                     )

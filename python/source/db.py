@@ -1,44 +1,68 @@
-def handle_value(value):
-    return "'{}'".format(value) if isinstance(value, str) else str(value)
+import psycopg2
+import psycopg2.extras
+import logging
 
 
-def build_where(where, sep = ' AND '):
-    return 'WHERE {}'.format(
-        ' {} '.format(sep).join(['{}={}'.format(key, handle_value(value))
-                    for key, value in where.items()])
-    )
-
-
-def build_set(set):
-    return 'SET {}'.format(
-        ','.join(['{}={}'.format(key, handle_value(value))
-                  for key, value in set.items()])
-    )
-
-
-def build_universal_select_query(db_table, where=None, sep=' AND '):
+async def exec_universal_select_query(db_table, where=None, sep=' AND ', one=False, conn=None):
     query = 'SELECT * FROM {}'.format(db_table)
     if where:
-        query = '{} {}'.format(query, build_where(where, sep))
-    query += ';'
-    return query
+        query = '{} WHERE {}'.format(
+            query,
+            sep.join(['{}=%s'.format(key) for key in where.keys()])
+        )
+    async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+        await cursor.execute(query, tuple(where.values()))
+        if one:
+            return await cursor.fetchone()
+        else:
+            return await cursor.fetchall()
 
 
-def build_universal_insert_query(db_table, set):
-    return 'INSERT INTO {db_table} ({fields}) VALUES ({values}) RETURNING *;'.format(
+async def exec_universal_insert_query(db_table, set, conn):
+    query = 'INSERT INTO {db_table} ({fields}) VALUES ({values}) RETURNING *;'.format(
         db_table=db_table,
         fields=",".join(map(str, set.keys())).replace("'", ''),
-        values=",".join(map(handle_value, set.values()))
+        values=",".join('%s' for _ in range(len(set)))
     )
 
+    logging.warning('query --> {}'.format(query))
 
-def build_universal_update_query(db_table, set, where):
-    return 'UPDATE {db_table} {set} {where} RETURNING *;'.format(
+    async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+        await cursor.execute(query, tuple(set.values()))
+        return await cursor.fetchone()
+
+
+async def exec_universal_update_query(db_table, set, where, sep=' AND ', conn=None):
+    if len(set) == 1:
+        query = 'UPDATE {db_table} SET {set_keys} = {set_values} WHERE {where} RETURNING *;'.format(
+            db_table=db_table,
+            set_keys=list(set.keys())[0],
+            set_values='%s',
+            where=sep.join(['{}=%s'.format(key) for key in where.keys()])
+        )
+    else:
+        query = 'UPDATE {db_table} SET ({set_keys}) = ({set_values}) WHERE {where} RETURNING *;'.format(
+            db_table=db_table,
+            set_keys=','.join(set.keys()),
+            set_values=','.join('%s' for _ in range(len(set))),
+            where=sep.join(['{}=%s'.format(key) for key in where.keys()])
+        )
+
+    logging.warning('query --> {}'.format(query))
+
+    async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+        await cursor.execute(query, tuple(set.values()) + tuple(where.values()))
+        return await cursor.fetchone()
+
+
+async def exec_universal_delete_query(db_table, where, sep=' AND ', conn=None):
+    query = 'DELETE FROM {db_table} WHERE {where}'.format(
         db_table=db_table,
-        set=build_set(set),
-        where=build_where(where)
+        where=sep.join(['{}=%s'.format(key) for key in where.keys()])
     )
 
+    logging.warning('query --> {}'.format(query))
 
-def build_universal_delete_query(db_table, where):
-    return 'DELETE FROM {} {}'.format(db_table, build_where(where))
+    async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+        await cursor.execute(query, tuple(where.values()))
+
