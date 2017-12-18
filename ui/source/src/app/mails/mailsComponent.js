@@ -56,7 +56,7 @@ function mailsView(
         $ctrl.user = angular.copy($rootScope.user);
         $ctrl.avatar = $ctrl.user.avatar_url || 'assets/avatar.png';
 
-        MailsFactory.getMails($ctrl.user.id)
+        MailsFactory.getMails($ctrl.user.email)
             .then(response => {
                 $ctrl.mails = angular.copy(response.data);
 
@@ -117,7 +117,7 @@ function mailsView(
                     MailsFactory.createMail({
                         header: $scope.theme,
                         content: $scope.mail,
-                        sender_id: $ctrl.user.id,
+                        sender_id: $ctrl.user.email,
                         recipient_id: $scope.sendTo
                     })
                         .then(() => window.location.reload())

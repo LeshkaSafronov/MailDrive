@@ -10,8 +10,8 @@ function mailsFactory($http) {
             return $http.post('/api/mails', mail);
         },
 
-        getMails(userId) {
-            return $http.get(''.concat('/api/users/', userId, '/mails'));
+        getMails(userMail) {
+            return $http.get(''.concat('/api/users/', userMail, '/mails'));
         },
 
         sendMail(mailId) {
