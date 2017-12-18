@@ -12,13 +12,12 @@ EOSQL
 
 PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka <<-EOSQL
     CREATE TABLE maildrive_user (
-        id SERIAL PRIMARY KEY,
         name VARCHAR(256),
         subname VARCHAR(256),
         age INTEGER CHECK (age > 0),
         country VARCHAR(256),
         telephone_number VARCHAR(32),
-        email VARCHAR(254),
+        email VARCHAR(254) PRIMARY KEY,
         password VARCHAR(256),
         avatar_url VARCHAR(256),
         avatar_token VARCHAR(256)
@@ -28,8 +27,8 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
         id SERIAL PRIMARY KEY,
         header VARCHAR(256),
         content VARCHAR(256),
-        sender_id integer,
-        recipient_id integer
+        sender_id VARCHAR(256),
+        recipient_id VARCHAR(256)
     );
 
     CREATE TABLE maildrive_mail_data (
@@ -46,7 +45,7 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
 
     CREATE TABLE maildrive_user_mail (
         id SERIAL PRIMARY KEY,
-        user_id integer REFERENCES maildrive_user (id),
+        user_id VARCHAR(256) REFERENCES maildrive_user (email),
         mail_id integer REFERENCES maildrive_mail (id),
         mailgroup_id integer REFERENCES maildrive_mailgroup (id)
     );

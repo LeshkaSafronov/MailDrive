@@ -14,8 +14,7 @@ from botocore.exceptions import ClientError
 
 class UserViewSet(BaseViewSet):
 
-    FIELDS = ('id',
-              'name',
+    FIELDS = ('name',
               'subname',
               'age',
               'country',
@@ -25,32 +24,31 @@ class UserViewSet(BaseViewSet):
               'avatar_url',
               'avatar_token')
 
-    OBJECT_ID = 'user_id'
+    PK = 'email'
     DB_TABLE = 'maildrive_user'
 
     def __init__(self, dbpool):
         self._dbpool = dbpool
 
     def register_routes(self, router):
+        router.add_get('/api/users/is_auth', self.get_auth_user)
         router.add_get('/api/users', self.list_objects)
-        router.add_get('/api/users/{user_id:\d+}', self.retrieve_object)
+        router.add_get('/api/users/{email}', self.retrieve_object)
         router.add_post('/api/users', self.create_object)
-        router.add_put('/api/users/{user_id:\d+}', self.update_object)
-        router.add_delete('/api/users/{user_id:\d+}', self.delete_object)
+        router.add_put('/api/users/{email}', self.update_object)
+        router.add_delete('/api/users/{email}', self.delete_object)
 
         router.add_post('/api/users/login', self.login)
         router.add_post('/api/users/logout', self.logout)
 
-        router.add_get('/api/users/{user_id:\d+}/avatar', self.get_avatar)
-        router.add_put('/api/users/{user_id:\d+}/avatar', self.set_avatar)
+        router.add_get('/api/users/{email}/avatar', self.get_avatar)
+        router.add_put('/api/users/{email}/avatar', self.set_avatar)
         router.add_post('/api/users/singup', self.create_object)
-        router.add_get('/api/users/is_auth', self.get_auth_user)
-        router.add_get('/api/users/{user_id:\d+}/mails', self.get_mails)
-
+        router.add_get('/api/users/{email}/mails', self.get_mails)
 
     async def get_auth_user(self, request):
         session = await get_session(request)
-        request.match_info[self.OBJECT_ID] = session['user_id']
+        request.match_info[self.PK] = session[self.PK]
         return await self.retrieve_object(request)
 
     async def validate_email(self, request_data):
@@ -96,7 +94,7 @@ class UserViewSet(BaseViewSet):
         email, password = request_json['email'], request_json['password']
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
                         'maildrive_user',
@@ -106,11 +104,11 @@ class UserViewSet(BaseViewSet):
                         }
                     )
                 )
-                data = await self._fetch_one(cursor)
+                data = await cursor.fetchone()
                 if data:
                     session = await get_session(request)
                     session['authorized'] = True
-                    session['user_id'] = data['id']
+                    session[self.PK] = data[self.PK]
                     return web.Response(status=200)
                 else:
                     return web.Response(text='Invalide email or password', status=400)
@@ -121,9 +119,9 @@ class UserViewSet(BaseViewSet):
         return web.Response(status=200)
 
     async def get_avatar(self, request):
-        user_id = int(request.match_info['user_id'])
+        user_id = int(request.match_info[self.PK])
         user = await self.get_object('maildrive_user',
-                                     where={'id': user_id})
+                                     where={self.PK: user_id})
         if not user:
             return web.Response(text='Not found', status=404)
 
@@ -153,10 +151,10 @@ class UserViewSet(BaseViewSet):
         return web.Response(body=content, status=200, content_type=file['ContentType'])
 
     async def set_avatar(self, request):
-        user_id = int(request.match_info['user_id'])
+        user_id = int(request.match_info[self.PK])
 
         user = await self.get_object('maildrive_user',
-                                     where={'id': user_id})
+                                     where={self.PK: user_id})
         if not user:
             return web.Response(text='Not found', status=404)
 
@@ -181,7 +179,7 @@ class UserViewSet(BaseViewSet):
                             'avatar_url': avatar_url,
                             'avatar_token': token
                         },
-                        where={'id': user_id}
+                        where={self.PK: user_id}
                     )
                 )
 
@@ -199,7 +197,7 @@ class UserViewSet(BaseViewSet):
         user = json.loads(response_user.body.decode())
 
         where = {
-            'user_id': user['id']
+            'user_id': user[self.PK]
         }
 
         mailgroup_id = request.query.get('mailgroup_id')
@@ -223,5 +221,5 @@ class UserViewSet(BaseViewSet):
                     )
                     mails = list(map(dict, await cursor.fetchall()))
                     for mail in mails:
-                        mail['mailgroup_id'] = await self.get_mailgroup_id(user['id'], mail['id'])
+                        mail['mailgroup_id'] = await self.get_mailgroup_id(user['email'], mail['id'])
         return web.json_response(mails)

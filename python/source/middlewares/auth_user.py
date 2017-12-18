@@ -1,5 +1,3 @@
-import logging
-import random
 import re
 import base64
 import db
@@ -10,7 +8,6 @@ import psycopg2.extras
 from aiohttp.web import middleware, Response
 from aiohttp_session import get_session
 from settings import CONNECTION_STRING
-from storage import client
 
 
 async def check_basic_auth(request):
@@ -33,8 +30,7 @@ async def check_basic_auth(request):
                 return False
 
             session = await get_session(request)
-            session['user_id'] = user.id
-
+            session['email'] = user.email
     return True
 
 

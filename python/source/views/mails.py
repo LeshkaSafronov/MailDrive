@@ -3,7 +3,6 @@ import random
 import db
 import exceptions
 import psycopg2.extras
-import logging
 import json
 
 from views.base import BaseViewSet
@@ -22,7 +21,7 @@ class MailViewSet(BaseViewSet):
               'recipient_id',
               'mailgroup_id')
 
-    OBJECT_ID = 'mail_id'
+    PK = 'id'
     DB_TABLE = 'maildrive_mail'
 
     def __init__(self, dbpool):
@@ -30,10 +29,10 @@ class MailViewSet(BaseViewSet):
 
     def register_routes(self, router):
         router.add_get('/api/mails', self.list_mails)
-        router.add_get('/api/mails/{mail_id:\d+}', self.retrieve_mail)
+        router.add_get('/api/mails/{id:\d+}', self.retrieve_mail)
         router.add_post('/api/mails', self.create_mail)
-        router.add_put('/api/mails/{mail_id:\d+}', self.update_object)
-        router.add_delete('/api/mails/{mail_id:\d+}', self.delete_mail)
+        router.add_put('/api/mails/{id:\d+}', self.update_object)
+        router.add_delete('/api/mails/{id:\d+}', self.delete_mail)
 
         router.add_get('/api/mails/{mail_id:\d+}/files', self.list_mail_files)
         router.add_get('/api/mails/{mail_id:\d+}/files/{file_id:\d+}', self.get_mail_file)
@@ -55,7 +54,7 @@ class MailViewSet(BaseViewSet):
                     db.build_universal_select_query(
                         'maildrive_user',
                         where={
-                            'id': sender_id,
+                            'email': sender_id,
                         }
                     )
                 )
@@ -72,7 +71,7 @@ class MailViewSet(BaseViewSet):
                         db.build_universal_select_query(
                             'maildrive_user',
                             where={
-                                'id': recipient_id,
+                                'email': recipient_id,
                             }
                         )
                     )
@@ -86,7 +85,7 @@ class MailViewSet(BaseViewSet):
             return response
 
         session = await get_session(request)
-        user_id = session['user_id']
+        user_id = session['email']
 
         mails = json.loads(response.body.decode())
         for mail in mails:
@@ -99,7 +98,7 @@ class MailViewSet(BaseViewSet):
             return response
 
         session = await get_session(request)
-        user_id = session['user_id']
+        user_id = session['email']
 
         mail = json.loads(response.body.decode())
         mail['mailgroup_id'] = await self.get_mailgroup_id(user_id, mail['id'])
@@ -114,11 +113,10 @@ class MailViewSet(BaseViewSet):
             return web.Response(text=str(e), status=400)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(db.build_universal_insert_query(self.DB_TABLE,
                                                                      set=request_data))
-                data = await self._fetch_one(cursor)
-                logging.warning('data --> {}'.format(data))
+                data = await cursor.fetchone()
                 await cursor.execute(
                     db.build_universal_insert_query(
                         'maildrive_user_mail',
@@ -129,7 +127,7 @@ class MailViewSet(BaseViewSet):
                         }
                     )
                 )
-        return web.json_response(data, status=201)
+        return web.json_response(dict(data), status=201)
 
     async def send(self, request):
         mail_id = int(request.match_info['mail_id'])
@@ -364,10 +362,10 @@ class MailViewSet(BaseViewSet):
 
     async def delete_mail(self, request):
 
-        object_id = int(request.match_info[self.OBJECT_ID])
+        object_id = int(request.match_info[self.PK])
 
         object = await self.get_object(self.DB_TABLE,
-                                       where={'id': object_id})
+                                       where={self.PK: object_id})
         if not object:
             return web.Response(text='Not found', status=404)
 
@@ -396,7 +394,7 @@ class MailViewSet(BaseViewSet):
                 await cursor.execute(
                     db.build_universal_delete_query(
                         self.DB_TABLE,
-                        where={'id': object_id}
+                        where={self.PK: object_id}
                     )
                 )
 

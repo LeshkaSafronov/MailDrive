@@ -1,35 +1,34 @@
 import db
 import exceptions
 import psycopg2
+import psycopg2.extras
+import logging
 
 from aiohttp import web
-from collections import OrderedDict
 
 
 class BaseViewSet:
 
     async def get_object(self, db_table, where):
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
                         db_table,
                         where=where
                     )
                 )
-                data = await self._fetch_one(cursor)
-                return data
-
-    async def _fetch_one(self, cursor):
-        record = await cursor.fetchone()
-        if record:
-            return OrderedDict(zip(self.FIELDS, record))
+                data = await cursor.fetchone()
+        if data:
+            return dict(data)
         else:
             return None
 
-    async def _fetch_all(self, cursor):
-        records = await cursor.fetchall()
-        return [OrderedDict(zip(self.FIELDS, record)) for record in records]
+    def get_object_id(self, request):
+        object_id = request.match_info[self.PK]
+        if object_id.isdigit():
+            object_id = int(object_id)
+        return object_id
 
     async def validation_request_data(self, request_data, method, object=None):
         validators = {validator.split('validate_')[1]: getattr(self, validator)
@@ -43,20 +42,21 @@ class BaseViewSet:
         query_params = {key: int(value) if value.isdigit() else value
                         for key, value in request.query.items()}
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(
                     db.build_universal_select_query(
                         self.DB_TABLE,
                         where=query_params
                     )
                 )
-                data = await self._fetch_all(cursor)
+                data = list(map(dict, await cursor.fetchall()))
+
         return web.json_response(data=data)
 
     async def retrieve_object(self, request):
-        object_id = int(request.match_info[self.OBJECT_ID])
+        object_id = self.get_object_id(request)
         object = await self.get_object(self.DB_TABLE,
-                                       where={'id': object_id})
+                                       where={self.PK: object_id})
         if not object:
             return web.Response(text='Not found', status=404)
         else:
@@ -71,18 +71,19 @@ class BaseViewSet:
             return web.Response(text=str(e), status=400)
 
         async with self._dbpool.acquire() as conn:
-            async with conn.cursor() as cursor:
+            async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
                 await cursor.execute(db.build_universal_insert_query(self.DB_TABLE,
                                                                      set=request_data))
 
-                data = await self._fetch_one(cursor)
-        return web.json_response(data, status=201)
+                data = await cursor.fetchone()
+
+        return web.json_response(dict(data), status=201)
 
     async def update_object(self, request):
-        object_id = int(request.match_info[self.OBJECT_ID])
+        object_id = self.get_object_id(request)
 
         object = await self.get_object(self.DB_TABLE,
-                                       where={'id': object_id})
+                                       where={self.PK: object_id})
         if not object:
             return web.Response(text='Not found', status=404)
 
@@ -98,15 +99,14 @@ class BaseViewSet:
             async with conn.cursor() as cursor:
                 await cursor.execute(db.build_universal_update_query(self.DB_TABLE,
                                                                      set=request_data,
-                                                                     where={'id': object_id}))
+                                                                     where={self.PK: object_id}))
                 data = await self._fetch_one(cursor)
         return web.json_response(data, status=200)
 
     async def delete_object(self, request):
-        object_id = int(request.match_info[self.OBJECT_ID])
-
+        object_id = self.get_object_id(request)
         object = await self.get_object(self.DB_TABLE,
-                                       where={'id': object_id})
+                                       where={self.PK: object_id})
         if not object:
             return web.Response(text='Not found', status=404)
 
@@ -115,7 +115,7 @@ class BaseViewSet:
                 await cursor.execute(
                     db.build_universal_delete_query(
                         self.DB_TABLE,
-                        where={'id': object_id}
+                        where={self.PK: object_id}
                     )
                 )
         return web.json_response(status=204)

@@ -48,6 +48,14 @@ up: build-db build-python build-nginx
 	fi;
 	docker-compose up
 
+.PHONY: up-backend
+up-backend: build-db build-python
+	if ! docker network ls | awk '{ print $$2 }' | grep proxy-nginx; \
+		then \
+			docker network create proxy-nginx; \
+	fi;
+	docker-compose up
+
 .PHONY: down
 down:
 	docker-compose down --remove-orphans
