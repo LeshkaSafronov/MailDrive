@@ -215,7 +215,7 @@ class UserViewSet(BaseViewSet):
                 records = await cursor.fetchall()
                 mails = []
                 if records:
-                    mail_ids = tuple(record['mail_id'] for record in records)
+                    mail_ids = '({})'.format(','.join(str(record['mail_id']) for record in records))
                     await cursor.execute(
                         "SELECT * FROM maildrive_mail WHERE id IN {}".format(mail_ids)
                     )
