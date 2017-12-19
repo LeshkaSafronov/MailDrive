@@ -1,17 +1,12 @@
-import psycopg2
-import psycopg2.extras
-
 from aiohttp import web
 
 import db
 import exceptions
 from views.base import BaseViewSet
+from datetime import datetime
 
 
 class MailGroupViewSet(BaseViewSet):
-
-    FIELDS = ('id',
-              'name')
 
     OBJECT_ID = 'mailgroup_id'
     DB_TABLE = 'maildrive_mailgroup'
@@ -62,6 +57,16 @@ class MailGroupViewSet(BaseViewSet):
                 },
                 where={
                     'id': user_mail['id']
+                },
+                conn=conn
+            )
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mailgroups',
+                    'method': 'change',
+                    'timestamp': datetime.now()
                 },
                 conn=conn
             )

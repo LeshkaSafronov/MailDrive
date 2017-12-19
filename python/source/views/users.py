@@ -10,19 +10,10 @@ from aiohttp_session import get_session
 from views.base import BaseViewSet
 from storage import client
 from botocore.exceptions import ClientError
+from datetime import datetime
 
 
 class UserViewSet(BaseViewSet):
-
-    FIELDS = ('name',
-              'subname',
-              'age',
-              'country',
-              'telephone_number',
-              'email',
-              'password',
-              'avatar_url',
-              'avatar_token')
 
     PK = 'email'
     DB_TABLE = 'maildrive_user'
@@ -99,6 +90,17 @@ class UserViewSet(BaseViewSet):
                 one=True,
                 conn=conn
             )
+
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'users',
+                    'method': 'login',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
             if data:
                 session = await get_session(request)
                 session['authorized'] = True
@@ -110,6 +112,18 @@ class UserViewSet(BaseViewSet):
     async def logout(self, request):
         session = await get_session(request)
         session.pop('authorized', None)
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'users',
+                    'method': 'logout',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
         return web.Response(status=200)
 
     async def get_avatar(self, request):
@@ -142,6 +156,17 @@ class UserViewSet(BaseViewSet):
         )
 
         content = file['Body'].read()
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'users',
+                    'method': 'get_avatar',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         return web.Response(body=content, status=200, content_type=file['ContentType'])
 
     async def set_avatar(self, request):
@@ -171,6 +196,16 @@ class UserViewSet(BaseViewSet):
                     'avatar_token': token
                 },
                 where={self.PK: user_id},
+                conn=conn
+            )
+
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'users',
+                    'method': 'set_avatar',
+                    'timestamp': datetime.now()
+                },
                 conn=conn
             )
 
@@ -211,4 +246,14 @@ class UserViewSet(BaseViewSet):
                     mails = list(map(dict, await cursor.fetchall()))
                     for mail in mails:
                         mail['mailgroup_id'] = await self.get_mailgroup_id(user['email'], mail['id'])
+
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'users',
+                    'method': 'get_mails',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         return web.json_response(mails)

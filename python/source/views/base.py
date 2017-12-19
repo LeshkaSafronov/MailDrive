@@ -4,7 +4,7 @@ import psycopg2
 import psycopg2.extras
 
 from aiohttp import web
-
+from datetime import datetime
 
 class BaseViewSet:
 
@@ -46,12 +46,34 @@ class BaseViewSet:
             )
             data = list(map(dict, data))
 
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'base',
+                    'method': 'list_objects',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
         return web.json_response(data=data)
 
     async def retrieve_object(self, request):
         object_id = self.get_object_id(request)
         object = await self.get_object(self.DB_TABLE,
                                        where={self.PK: object_id})
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'base',
+                    'method': 'retrieve_object',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         if not object:
             return web.Response(text='Not found', status=404)
         else:
@@ -72,6 +94,17 @@ class BaseViewSet:
                     set=request_data,
                     conn=conn
                 )
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'base',
+                    'method': 'create_object',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         return web.json_response(dict(data), status=201)
 
     async def update_object(self, request):
@@ -97,6 +130,17 @@ class BaseViewSet:
                 where={self.PK: object_id},
                 conn=conn
             )
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'base',
+                    'method': 'update_object',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         return web.json_response(data, status=200)
 
     async def delete_object(self, request):
@@ -112,6 +156,16 @@ class BaseViewSet:
                 where={self.PK: object_id},
                 conn=conn
             )
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'base',
+                    'method': 'delete_object',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         return web.json_response(status=204)
 
     async def get_mailgroup_id(self, user_id, mail_id):
@@ -124,5 +178,15 @@ class BaseViewSet:
                 },
                 conn=conn,
                 one=True
+            )
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'base',
+                    'method': 'get_mailgroup_id',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
             )
         return record['mailgroup_id']

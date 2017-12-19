@@ -4,6 +4,7 @@ import aiopg
 from views.users import UserViewSet
 from views.mails import MailViewSet
 from views.mailgroup import MailGroupViewSet
+from views.logs import LogViewSet
 
 from middlewares.auth_user import auth_middleware
 from cryptography import fernet
@@ -23,6 +24,7 @@ class APIServer(web.Application):
         UserViewSet(self._dbpool).register_routes(self.router)
         MailViewSet(self._dbpool).register_routes(self.router)
         MailGroupViewSet(self._dbpool).register_routes(self.router)
+        LogViewSet(self._dbpool).register_routes(self.router)
 
         self.router.add_get('/api', self.welcome)
 

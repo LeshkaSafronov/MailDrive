@@ -10,16 +10,10 @@ from aiohttp import web
 from storage import client
 from botocore.client import ClientError
 from aiohttp_session import get_session
+from datetime import datetime
 
 
 class MailViewSet(BaseViewSet):
-
-    FIELDS = ('id',
-              'header',
-              'content',
-              'sender_id',
-              'recipient_id',
-              'mailgroup_id')
 
     PK = 'id'
     DB_TABLE = 'maildrive_mail'
@@ -86,6 +80,18 @@ class MailViewSet(BaseViewSet):
         mails = json.loads(response.body.decode())
         for mail in mails:
             mail['mailgroup_id'] = await self.get_mailgroup_id(user_id, mail['id'])
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'list_mails',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
         return web.json_response(mails)
 
     async def retrieve_mail(self, request):
@@ -98,6 +104,18 @@ class MailViewSet(BaseViewSet):
 
         mail = json.loads(response.body.decode())
         mail['mailgroup_id'] = await self.get_mailgroup_id(user_id, mail['id'])
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'retrieve_mail',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
         return web.json_response(mail)
 
     async def create_mail(self, request):
@@ -123,6 +141,17 @@ class MailViewSet(BaseViewSet):
                 },
                 conn=conn
             )
+
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'create_mail',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
         return web.json_response(dict(data), status=201)
 
     async def send(self, request):
@@ -168,6 +197,17 @@ class MailViewSet(BaseViewSet):
                 },
                 conn=conn
             )
+
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'send',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
         return web.Response(text='Mail sended', status=200)
 
     async def list_mail_files(self, request):
@@ -186,7 +226,18 @@ class MailViewSet(BaseViewSet):
                 conn=conn
             )
             data = list(map(dict, data))
-            return web.json_response(data, status=200)
+
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'list_mail_files',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
+        return web.json_response(data, status=200)
 
     async def get_mail_file(self, request):
         mail_id = int(request.match_info['mail_id'])
@@ -209,6 +260,17 @@ class MailViewSet(BaseViewSet):
 
         if not file:
             return web.Response(text='Not found', status=404)
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'get_mail_file',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         return web.json_response(dict(file), status=200)
 
     async def get_mail_file_data(self, request):
@@ -255,6 +317,17 @@ class MailViewSet(BaseViewSet):
         )
 
         content = s3_object['Body'].read()
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'get_mail_file_data',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         return web.Response(body=content, status=200, content_type=s3_object['ContentType'])
 
     async def add_mail_file(self, request):
@@ -297,6 +370,16 @@ class MailViewSet(BaseViewSet):
                           Key='{}/files/{}/{}'.format(mail_id, db_file['id'], token),
                           Body=content)
 
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'add_mail_file',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
         return web.json_response(dict(updated_db_file), status=200)
 
     async def delete_mail_file(self, request):
@@ -334,6 +417,18 @@ class MailViewSet(BaseViewSet):
             Bucket='mails',
             Key='{}/files/{}/{}'.format(mail_id, file['id'], file['data_token']),
         )
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'delete_mail_file',
+                    'timestamp': datetime.now()
+                },
+                conn=conn
+            )
+
         return web.Response(status=204)
 
     async def delete_mail(self, request):
@@ -363,6 +458,17 @@ class MailViewSet(BaseViewSet):
             await db.exec_universal_delete_query(
                 self.DB_TABLE,
                 where={self.PK: object_id},
+                conn=conn
+            )
+
+        async with self._dbpool.acquire() as conn:
+            await db.exec_universal_insert_query(
+                'maildrive_log',
+                set={
+                    'entity': 'mails',
+                    'method': 'delete_mail',
+                    'timestamp': datetime.now()
+                },
                 conn=conn
             )
 

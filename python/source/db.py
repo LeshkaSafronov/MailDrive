@@ -11,7 +11,11 @@ async def exec_universal_select_query(db_table, where=None, sep=' AND ', one=Fal
             sep.join(['{}=%s'.format(key) for key in where.keys()])
         )
     async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
-        await cursor.execute(query, tuple(where.values()))
+        if where:
+            await cursor.execute(query, tuple(where.values()))
+        else:
+            await cursor.execute(query)
+
         if one:
             return await cursor.fetchone()
         else:
@@ -24,8 +28,6 @@ async def exec_universal_insert_query(db_table, set, conn):
         fields=",".join(map(str, set.keys())).replace("'", ''),
         values=",".join('%s' for _ in range(len(set)))
     )
-
-    logging.warning('query --> {}'.format(query))
 
     async with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
         await cursor.execute(query, tuple(set.values()))

@@ -26,7 +26,7 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
     CREATE TABLE maildrive_mail (
         id SERIAL PRIMARY KEY,
         header VARCHAR(256),
-        content VARCHAR(256),
+        content VARCHAR(10240),
         sender_id VARCHAR(256),
         recipient_id VARCHAR(256)
     );
@@ -48,6 +48,13 @@ PGPASSWORD=leshka psql -v ON_ERROR_STOP=1 --dbname=mail_drive --username=leshka 
         user_id VARCHAR(256) REFERENCES maildrive_user (email),
         mail_id integer REFERENCES maildrive_mail (id),
         mailgroup_id integer REFERENCES maildrive_mailgroup (id)
+    );
+
+    CREATE TABLE maildrive_log (
+        id SERIAL PRIMARY KEY,
+        entity VARCHAR(256),
+        method VARCHAR(256),
+        timestamp timestamp
     );
 
     INSERT INTO maildrive_user (email, password)
