@@ -113,7 +113,7 @@ class UserViewSet(BaseViewSet):
         return web.Response(status=200)
 
     async def get_avatar(self, request):
-        user_id = int(request.match_info[self.PK])
+        user_id = request.match_info[self.PK]
         user = await self.get_object('maildrive_user',
                                      where={self.PK: user_id})
         if not user:
@@ -164,7 +164,7 @@ class UserViewSet(BaseViewSet):
         avatar_url = '/api/users/{}/avatar?imghash={}'.format(user_id, token)
 
         async with self._dbpool.acquire() as conn:
-            data = await db.exec_universal_update_query(
+            await db.exec_universal_update_query(
                 'maildrive_user',
                 set={
                     'avatar_url': avatar_url,
