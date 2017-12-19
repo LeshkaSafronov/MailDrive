@@ -193,7 +193,7 @@ function mailsView(
                 $scope.apply = () => {
                     // Change avatar
                     FileFactory.changeAvatar(
-                        $scope.imgFile, ''.concat('/api/users/', user.id, '/avatar'))
+                        $scope.imgFile, ''.concat('/api/users/', user.email, '/avatar'))
                         .then(() => window.location.reload())
                         .catch(reject => toastr.error(reject.data));
                     $uibModalInstance.dismiss('cancel');
