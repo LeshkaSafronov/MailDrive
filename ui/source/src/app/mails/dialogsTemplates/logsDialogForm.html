@@ -1,0 +1,30 @@
+<div class="modal-parent">
+  <!-- Dialog header -->
+  <div class="modal-header">
+    <h4 class="modal-title">LOGS</h4>
+  </div>
+
+  <!-- Dialog body -->
+  <div class="modal-body">
+    <table class="table">
+      <thead>
+        <th>timestamp</th>
+        <th>method</th>
+        <th>entity</th>
+      </thead>
+
+      <tbody>
+        <tr ng-repeat="log in logs track by $index">
+          <td ng-bind="log.timestamp"></td>
+          <td ng-bind="log.method"></td>
+          <td ng-bind="log.entity"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Dialog footer -->
+  <div class="modal-footer">
+    <button class="btn btn-primary" type="button" ng-click="cancel()">Cancel</button>
+  </div>
+</div>

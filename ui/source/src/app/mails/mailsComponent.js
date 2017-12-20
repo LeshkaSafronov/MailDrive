@@ -10,6 +10,7 @@ const CHANGE_SETTINGS_TEMPLATE = require('./dialogsTemplates/settingsDialogForm.
 const MAIL_DIALOG_TEMPLATE = require('./dialogsTemplates/mailDialogForm.html');
 const SEND_DIALOG_TEMPLATE = require('./dialogsTemplates/sendMailDialogForm.html');
 const ATTACH_DIALOG_TEMPLATE = require('./dialogsTemplates/attachDialogForm.html');
+const LOGS_DIALOG_TEMPLATE = require('./dialogsTemplates/logsDialogForm.html');
 const KEY_ESC = 27;
 const MAIL_GROUP = ['Inbox', 'Sended', 'Draft'];
 
@@ -23,6 +24,7 @@ mod.component(fullName, {
         require('app/core/api/files/fileFactory').fullName,
         require('app/core/api/users/usersFactory').fullName,
         require('app/core/api/mails/mailsFactory').fullName,
+        require('app/core/api/logs/logsFactory').fullName,
         mailsView
     ]
 });
@@ -34,9 +36,11 @@ function mailsView(
     AuthFactory,
     FileFactory,
     UsersFactory,
-    MailsFactory
+    MailsFactory,
+    LogsFactory
 ) {
     const $ctrl = angular.extend(this, {
+        getLogs,
         attachFile,
         createMail,
         delMail,
@@ -198,6 +202,20 @@ function mailsView(
                         .catch(reject => toastr.error(reject.data));
                     $uibModalInstance.dismiss('cancel');
                 };
+            }
+        }).result.then(() => true, () => false);
+    }
+
+    function getLogs() {
+        $uibModal.open({
+            animation: true,
+            backdrop: true,
+            template: LOGS_DIALOG_TEMPLATE,
+            controller: ($scope,$uibModalInstance, $document) => {
+                $scope.cancel = () => $uibModalInstance.dismiss('cancel');
+                LogsFactory.getLogs()
+                    .then(response => $scope.logs = angular.copy(response.data))
+                    .catch(reject => toastr.error(reject.data));
             }
         }).result.then(() => true, () => false);
     }
